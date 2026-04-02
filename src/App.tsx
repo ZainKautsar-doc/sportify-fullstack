@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import type { User, UserRole } from '@/src/types/domain';
 import { apiRequest } from '@/src/lib/api';
@@ -16,6 +16,7 @@ import FieldDetailPage from '@/src/pages/FieldDetailPage';
 import PaymentUploadPage from '@/src/pages/PaymentUploadPage';
 import UserSchedulePage from '@/src/pages/UserSchedulePage';
 import UserProfilePage from '@/src/pages/UserProfilePage';
+import ContactPage from '@/src/pages/ContactPage';
 
 export default function App() {
   const [role, setRole] = useState<UserRole | null>(null);
@@ -62,6 +63,7 @@ function AppContent({
   onLogout: () => void;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSelectRole = async (nextRole: UserRole) => {
     try {
@@ -82,12 +84,12 @@ function AppContent({
     }
   };
 
-  const isHome = location.pathname === '/';
+  const isFullWidth = ['/', '/kontak'].includes(location.pathname);
 
   return (
     <>
       <TopNav role={role} userName={user?.name} onLogout={onLogout} />
-      <main className={`flex-1 w-full ${isHome ? '' : 'mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8'} pb-[calc(env(safe-area-inset-bottom)+5.8rem)]`}>
+      <main className={`flex-1 w-full ${isFullWidth ? '' : 'mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8'} pb-[calc(env(safe-area-inset-bottom)+5.8rem)]`}>
         <Routes>
           <Route path="/" element={role === 'admin' ? <Navigate to="/admin" replace /> : <HomePage role={role} />} />
           <Route path="/pilih-role" element={<RoleSelectionPage onSelectRole={handleSelectRole} />} />
@@ -164,6 +166,7 @@ function AppContent({
               )
             }
           />
+          <Route path="/kontak" element={<ContactPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

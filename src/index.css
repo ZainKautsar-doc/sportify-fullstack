@@ -3,6 +3,15 @@
 
 :root {
   color-scheme: light;
+  /* ── Navy design tokens ── */
+  --navy-950: #050f23;
+  --navy-900: #0a1f3c;
+  --navy-800: #0f2d5e;
+  --navy-700: #14407f;
+  --navy-600: #1a53a0;
+  --navy-500: #2266c1;
+  --navy-100: #dde8f5;
+  --navy-50:  #f0f5fb;
 }
 
 * {
@@ -18,7 +27,7 @@ body,
 body {
   margin: 0;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #f6f8fb;
+  background: #f4f7fb;
   color: #0f172a;
 }
 
@@ -27,30 +36,30 @@ body {
 }
 
 .bg-app {
-  background:
-    radial-gradient(circle at 12% 10%, rgba(148, 163, 184, 0.12), transparent 28%),
-    radial-gradient(circle at 90% 82%, rgba(59, 130, 246, 0.08), transparent 26%),
-    #f6f8fb;
+  background: #f4f7fb;
 }
 
+/* ── Navy utility classes ── */
+.bg-navy { background-color: var(--navy-800); }
+.bg-navy-dark { background-color: var(--navy-900); }
+.bg-navy-light { background-color: var(--navy-50); }
+.text-navy { color: var(--navy-800); }
+.border-navy { border-color: var(--navy-800); }
+
+/* ── Animations ── */
 @keyframes fade-up {
-  from {
-    transform: translateY(18px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(18px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 @keyframes subtle-zoom {
-  from {
-    transform: scale(1.05);
-  }
-  to {
-    transform: scale(1);
-  }
+  from { transform: scale(1.06); }
+  to   { transform: scale(1);    }
+}
+
+@keyframes accordion-open {
+  from { max-height: 0; opacity: 0; }
+  to   { max-height: 500px; opacity: 1; }
 }
 
 main {

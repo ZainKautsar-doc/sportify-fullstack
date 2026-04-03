@@ -1,139 +1,88 @@
-import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Goal, Dumbbell, Volleyball } from 'lucide-react';
-
-interface GalleryItem {
-  sport: string;
-  label: string;
-  sublabel: string;
-  imageUrl: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  badgeColor: string;
-}
-
-const galleryItems: GalleryItem[] = [
-  {
-    sport: 'futsal',
-    label: 'Futsal',
-    sublabel: 'Lapangan indoor premium kelas 1',
-    imageUrl: 'https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=800&q=80',
-    icon: Goal,
-    badgeColor: 'bg-emerald-600',
-  },
-  {
-    sport: 'badminton',
-    label: 'Badminton',
-    sublabel: 'Lantai karet, pencahayaan optimal',
-    imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
-    icon: Dumbbell,
-    badgeColor: 'bg-sky-600',
-  },
-  {
-    sport: 'padel',
-    label: 'Padel',
-    sublabel: 'Court berkaca outdoor & indoor',
-    imageUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=800&q=80',
-    icon: Volleyball,
-    badgeColor: 'bg-violet-600',
-  },
-];
-
-function GalleryCard({ item, index }: { item: GalleryItem; index: number }) {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const Icon = item.icon;
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setTimeout(() => setVisible(true), index * 120); obs.disconnect(); } },
-      { threshold: 0.12 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [index]);
-
-  return (
-    <div
-      ref={ref}
-      className="group relative overflow-hidden rounded-2xl bg-slate-900 shadow-lg"
-      style={{
-        transition: 'opacity 600ms ease, transform 600ms cubic-bezier(0.22,1,0.36,1)',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(28px)',
-      }}
-    >
-      {/* Image */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        <img
-          src={item.imageUrl}
-          alt={`${item.label} di Sportify`}
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-        />
-        {/* overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
-        {/* navy hover tint */}
-        <div className="absolute inset-0 bg-[#0f2d5e]/0 group-hover:bg-[#0f2d5e]/30 transition-colors duration-500" />
-      </div>
-
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-5">
-        <div className="flex items-end justify-between">
-          <div>
-            <span className={`inline-flex items-center gap-1.5 rounded-full ${item.badgeColor} px-3 py-1 text-xs font-bold text-white mb-2 shadow`}>
-              <Icon size={11} />
-              {item.sport.toUpperCase()}
-            </span>
-            <p className="font-display text-xl font-bold text-white leading-tight">{item.label}</p>
-            <p className="mt-0.5 text-sm text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75">
-              {item.sublabel}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Available badge */}
-      <div className="absolute top-4 right-4 rounded-xl bg-white/15 backdrop-blur border border-white/20 px-2.5 py-1">
-        <span className="text-xs font-bold text-white">Tersedia</span>
-      </div>
-    </div>
-  );
-}
+import { ArrowRight } from 'lucide-react';
 
 export default function GallerySection({ bookingHref = '/booking' }: { bookingHref?: string }) {
   return (
-    <section id="galeri">
-      {/* Header */}
-      <div className="mb-10 text-center">
-        <span className="inline-block rounded-full border border-[#0f2d5e]/20 bg-[#f0f5fb] text-[#0f2d5e] text-xs font-bold px-4 py-1.5 mb-3 tracking-wide uppercase">
-          Galeri Aktivitas
-        </span>
-        <h2 className="font-display text-3xl font-bold text-slate-900 md:text-4xl">
-          Lihat Keseruan di Lapangan
-        </h2>
-        <p className="mt-3 text-slate-500 max-w-md mx-auto text-base">
-          Dari futsal hingga padel — temukan olahraga favoritmu di Sportify.
-        </p>
-      </div>
+    <section id="galeri" className="relative bg-slate-50/50 py-16 md:py-28 rounded-3xl border border-slate-100 overflow-hidden">
+      <div className="mx-auto w-full max-w-7xl px-5 md:px-8">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          
+          {/* ----- KIRI (TEXT CONTENT) ----- */}
+          <div className="flex flex-col items-start gap-6 max-w-xl md:order-1 order-1">
+            {/* Small Heading */}
+            <span className="inline-block rounded-full border border-[#0f2d5e]/20 bg-[#f0f5fb] text-[#0f2d5e] text-xs font-bold px-4 py-1.5 tracking-wide uppercase shadow-sm">
+              Galeri Aktivitas
+            </span>
+            
+            {/* Main Headline */}
+            <h2 className="font-display text-4xl font-bold text-slate-900 md:text-5xl leading-[1.15] tracking-tight">
+              Serunya Main di Sportify Bareng Temanmu
+            </h2>
+            
+            {/* Description */}
+            <p className="text-slate-600 text-lg leading-relaxed">
+              Sportify menghadirkan pengalaman bermain yang seru dan praktis untuk semua kalangan. Mulai dari futsal, badminton, hingga padel, kamu bisa menikmati fasilitas lapangan berkualitas tanpa ribet. Tinggal pilih jadwal, booking, dan langsung main bareng teman atau tim kamu. Cocok untuk sekadar fun game, latihan rutin, sampai mini turnamen komunitas.
+            </p>
+            
+            {/* CTA */}
+            <Link 
+              to={bookingHref}
+              className="group mt-4 inline-flex items-center gap-2 text-[#0f2d5e] font-bold text-lg transition-all"
+            >
+              <span className="relative">
+                Lihat Selengkapnya
+                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#0f2d5e] origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+              </span>
+              <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+            </Link>
+          </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        {galleryItems.map((item, i) => <GalleryCard key={item.sport} item={item} index={i} />)}
-      </div>
+          {/* ----- KANAN (GALERI GRID) ----- */}
+          <div className="grid grid-cols-2 gap-4 md:gap-6 items-center md:order-2 order-2">
+            
+            {/* Kolom 1 (Staggered down di desktop) */}
+            <div className="flex flex-col gap-4 md:gap-6 md:pt-16">
+              {/* Gambar 1: Padel Outdoor */}
+              <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
+                <img 
+                  src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=600&q=80" 
+                  alt="Padel Court Outdoor" 
+                  className="w-full h-full object-cover transition-all duration-700 aspect-[4/5] group-hover:scale-105 group-hover:brightness-110"
+                />
+              </div>
+              {/* Gambar 2: Futsal Indoor */}
+              <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
+                <img 
+                  src="https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=600&q=80" 
+                  alt="Futsal Indoor Premium" 
+                  className="w-full h-full object-cover transition-all duration-700 aspect-square group-hover:scale-105 group-hover:brightness-110"
+                />
+              </div>
+            </div>
 
-      {/* CTA */}
-      <div className="mt-10 flex flex-col sm:flex-row gap-4 items-center justify-between rounded-2xl bg-[#0f2d5e] px-8 py-6 shadow-lg shadow-[#0f2d5e]/15">
-        <div>
-          <p className="font-display text-xl font-bold text-white">Siap ikut seru-seruan?</p>
-          <p className="text-sky-100 text-sm mt-0.5">Lebih dari 12.000 booking per bulan. Jangan ketinggalan!</p>
+            {/* Kolom 2 (Staggered up di desktop) */}
+            <div className="flex flex-col gap-4 md:gap-6 md:-mt-16">
+              {/* Gambar 3: Badminton Indoor */}
+              <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
+                <img 
+                  src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80" 
+                  alt="Badminton Indoor" 
+                  className="w-full h-full object-cover transition-all duration-700 aspect-square group-hover:scale-105 group-hover:brightness-110"
+                />
+              </div>
+              {/* Gambar 4: Mini Soccer Outdoor */}
+              <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
+                <img 
+                  src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=600&q=80" 
+                  alt="Mini Soccer Outdoor" 
+                  className="w-full h-full object-cover transition-all duration-700 aspect-[4/5] group-hover:scale-105 group-hover:brightness-110"
+                />
+              </div>
+            </div>
+
+          </div>
+
         </div>
-        <Link
-          to={bookingHref}
-          className="flex-shrink-0 inline-flex items-center gap-2 rounded-xl bg-white text-[#0f2d5e] px-6 py-3 text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-        >
-          Booking Lapangan →
-        </Link>
       </div>
     </section>
   );

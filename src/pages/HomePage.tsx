@@ -1,72 +1,79 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { Goal, Medal, Volleyball, Dumbbell } from 'lucide-react';
-import type { Booking, Field, UserRole } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
-import { Card } from '@/src/components/ui/Card';
-import Skeleton from '@/src/components/ui/Skeleton';
-import ErrorState from '@/src/components/ui/ErrorState';
-import FieldCard from '@/src/components/fields/FieldCard';
-import HeroSection from '@/src/components/home/HeroSection';
-import TrustSection from '@/src/components/home/TrustSection';
-import GallerySection from '@/src/components/home/GallerySection';
-import VenueAboutSection from '@/src/components/home/VenueAboutSection';
-import VenueMapSection from '@/src/components/home/VenueMapSection';
-import ContactSection from '@/src/components/home/ContactSection';
-import FAQAccordion from '@/src/components/home/FAQAccordion';
-import heroImage from '@/src/heroimg/herobaner.webp';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { Goal, Medal, Volleyball, Dumbbell } from "lucide-react";
+import type { Booking, Field, UserRole } from "@/src/types/domain";
+import { apiRequest } from "@/src/lib/api";
+import { Card } from "@/src/components/ui/Card";
+import Skeleton from "@/src/components/ui/Skeleton";
+import ErrorState from "@/src/components/ui/ErrorState";
+import FieldCard from "@/src/components/fields/FieldCard";
+import HeroSection from "@/src/components/home/HeroSection";
+import GallerySection from "@/src/components/home/GallerySection";
+import VenueAboutSection from "@/src/components/home/VenueAboutSection";
+import VenueMapSection from "@/src/components/home/VenueMapSection";
+import ContactSection from "@/src/components/home/ContactSection";
+import FAQAccordion from "@/src/components/home/FAQAccordion";
+import heroImage from "@/src/heroimg/herobaner.webp";
 
 interface HomePageProps {
   role: UserRole | null;
 }
 
 const categories = [
-  { name: 'Futsal', icon: Goal },
-  { name: 'Mini Soccer', icon: Medal },
-  { name: 'Padel', icon: Volleyball },
-  { name: 'Badminton', icon: Dumbbell },
+  { name: "Futsal", icon: Goal },
+  { name: "Mini Soccer", icon: Medal },
+  { name: "Padel", icon: Volleyball },
+  { name: "Badminton", icon: Dumbbell },
 ] as const;
 
 export default function HomePage({ role }: HomePageProps) {
-  const navigate   = useNavigate();
-  const [fields, setFields]               = useState<Field[]>([]);
+  const navigate = useNavigate();
+  const [fields, setFields] = useState<Field[]>([]);
   const [todayBookings, setTodayBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading]         = useState(true);
-  const [error, setError]                 = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const bookingBaseHref = role === 'user' ? '/booking' : '/pilih-role?next=%2Fbooking';
+  const bookingBaseHref =
+    role === "user" ? "/booking" : "/pilih-role?next=%2Fbooking";
 
   const scrollToExplore = useCallback(() => {
-    document.getElementById('explore-lapangan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document
+      .getElementById("explore-lapangan")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const handleBooking = useCallback(() => navigate(bookingBaseHref), [bookingBaseHref, navigate]);
+  const handleBooking = useCallback(
+    () => navigate(bookingBaseHref),
+    [bookingBaseHref, navigate],
+  );
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = format(new Date(), "yyyy-MM-dd");
       const [fieldsData, bookingData] = await Promise.all([
-        apiRequest<Field[]>('/api/fields'),
+        apiRequest<Field[]>("/api/fields"),
         apiRequest<Booking[]>(`/api/bookings?date=${today}`),
       ]);
       setFields(fieldsData);
       setTodayBookings(bookingData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ups, coba lagi ya');
+      setError(err instanceof Error ? err.message : "Ups, coba lagi ya");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const availabilityMap = useMemo(() => {
     const counts = new Map<number, number>();
     for (const b of todayBookings) {
-      if (b.status === 'rejected') continue;
+      if (b.status === "rejected") continue;
       counts.set(b.field_id, (counts.get(b.field_id) ?? 0) + 1);
     }
     return counts;
@@ -75,13 +82,13 @@ export default function HomePage({ role }: HomePageProps) {
   return (
     <div className="pb-20">
       {/* ① Hero — fullscreen */}
-      <HeroSection backgroundImage={heroImage} onExplore={scrollToExplore} onBooking={handleBooking} />
+      <HeroSection
+        backgroundImage={heroImage}
+        onExplore={scrollToExplore}
+        onBooking={handleBooking}
+      />
 
       <div className="mx-auto w-full max-w-7xl space-y-20 px-5 md:px-6 pt-16">
-
-        {/* ② Trust stats */}
-        <TrustSection />
-
         {/* ③ Gallery */}
         <GallerySection bookingHref={bookingBaseHref} />
 
@@ -92,8 +99,12 @@ export default function HomePage({ role }: HomePageProps) {
               <span className="inline-block rounded-full border border-[#0f2d5e]/20 bg-[#f0f5fb] text-[#0f2d5e] text-xs font-bold px-4 py-1.5 mb-3 tracking-wide uppercase">
                 Kategori
               </span>
-              <h2 className="font-display text-2xl font-bold text-slate-900">Kategori Olahraga</h2>
-              <p className="mt-1 text-sm text-slate-500">Pilih olahraga favoritmu dan cek lapangan tersedia.</p>
+              <h2 className="font-display text-2xl font-bold text-slate-900">
+                Kategori Olahraga
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Pilih olahraga favoritmu dan cek lapangan tersedia.
+              </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -120,8 +131,12 @@ export default function HomePage({ role }: HomePageProps) {
             <span className="inline-block rounded-full border border-[#0f2d5e]/20 bg-[#f0f5fb] text-[#0f2d5e] text-xs font-bold px-4 py-1.5 mb-3 tracking-wide uppercase">
               Rekomendasi
             </span>
-            <h2 className="font-display text-2xl font-bold text-slate-900">Rekomendasi Lapangan</h2>
-            <p className="text-sm text-slate-500 mt-1">Slot paling dicari hari ini — amankan sebelum penuh.</p>
+            <h2 className="font-display text-2xl font-bold text-slate-900">
+              Rekomendasi Lapangan
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Slot paling dicari hari ini — amankan sebelum penuh.
+            </p>
           </div>
 
           {isLoading ? (
@@ -143,14 +158,18 @@ export default function HomePage({ role }: HomePageProps) {
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               {fields.map((field) => {
                 const bookedCount = availabilityMap.get(field.id) ?? 0;
-                const status = bookedCount >= 7 ? 'full' : 'available';
+                const status = bookedCount >= 7 ? "full" : "available";
                 const bookingHref =
-                  role === 'user'
+                  role === "user"
                     ? `/booking/${field.id}`
                     : `/pilih-role?next=${encodeURIComponent(`/booking/${field.id}`)}`;
                 return (
                   <div key={field.id}>
-                    <FieldCard field={field} status={status} bookingHref={bookingHref} />
+                    <FieldCard
+                      field={field}
+                      status={status}
+                      bookingHref={bookingHref}
+                    />
                   </div>
                 );
               })}
@@ -175,14 +194,15 @@ export default function HomePage({ role }: HomePageProps) {
             <span className="inline-block rounded-full border border-[#0f2d5e]/20 bg-[#f0f5fb] text-[#0f2d5e] text-xs font-bold px-4 py-1.5 mb-3 tracking-wide uppercase">
               FAQ
             </span>
-            <h2 className="font-display text-3xl font-bold text-slate-900">Pertanyaan Umum</h2>
+            <h2 className="font-display text-3xl font-bold text-slate-900">
+              Pertanyaan Umum
+            </h2>
             <p className="mt-2 text-slate-500 max-w-sm mx-auto text-base">
               Jawaban dari pertanyaan yang paling sering kami terima.
             </p>
           </div>
           <FAQAccordion />
         </section>
-
       </div>
     </div>
   );

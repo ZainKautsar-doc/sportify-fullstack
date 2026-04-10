@@ -97,7 +97,7 @@ export default function HomePage({ role }: HomePageProps) {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <span className="inline-block rounded-full border border-[#0f2d5e]/20 bg-[#f0f5fb] text-[#0f2d5e] text-xs font-bold px-4 py-1.5 mb-3 tracking-wide uppercase">
-                Kategori
+                Cabang Olahraga
               </span>
               <h2 className="font-display text-2xl font-bold text-slate-900">
                 Kategori Olahraga
@@ -111,6 +111,14 @@ export default function HomePage({ role }: HomePageProps) {
             {categories.map(({ name, icon: Icon }) => (
               <div
                 key={name}
+                onClick={() => {
+                  const field = fields.find(
+                    (f) => f.type.toLowerCase() === name.toLowerCase()
+                  );
+                  if (field) {
+                    navigate(`/lapangan/${field.id}`);
+                  }
+                }}
                 className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:border-[#0f2d5e]/30 hover:shadow-md transition-all duration-200 cursor-pointer"
               >
                 <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0f5fb] text-[#0f2d5e] group-hover:bg-[#0f2d5e] group-hover:text-white transition-all duration-300">

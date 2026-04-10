@@ -40,7 +40,7 @@ export default function HeroSection({
             >
               Main Lebih Mudah
               <br />
-              <span className="text-sky-300">di Sportify</span>
+              <span className="text-sky-400">di Sportify</span>
             </h1>
 
             {/* Subtext */}

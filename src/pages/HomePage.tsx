@@ -15,6 +15,7 @@ import VenueAboutSection from '@/src/components/home/VenueAboutSection';
 import VenueMapSection from '@/src/components/home/VenueMapSection';
 import ContactSection from '@/src/components/home/ContactSection';
 import FAQAccordion from '@/src/components/home/FAQAccordion';
+import heroImage from '@/src/heroimg/herobaner.webp';
 
 interface HomePageProps {
   role: UserRole | null;
@@ -26,9 +27,6 @@ const categories = [
   { name: 'Padel', icon: Volleyball },
   { name: 'Badminton', icon: Dumbbell },
 ] as const;
-
-const heroImage =
-  'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1400&q=80';
 
 export default function HomePage({ role }: HomePageProps) {
   const navigate   = useNavigate();

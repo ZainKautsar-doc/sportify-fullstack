@@ -5,6 +5,18 @@ const STORAGE_KEYS = {
   user: 'sportify_user',
 } as const;
 
+function normalizeUserId(id: unknown, role?: UserRole): number | null {
+  if (typeof id === 'number' && Number.isInteger(id) && id > 0) return id;
+  if (typeof id === 'string') {
+    if (/^\d+$/.test(id)) return Number(id);
+    if (id === 'admin_1') return 1;
+    if (id === 'user_1') return 2;
+  }
+  if (role === 'admin') return 1;
+  if (role === 'user') return 2;
+  return null;
+}
+
 export function getStoredRole(): UserRole | null {
   const value = localStorage.getItem(STORAGE_KEYS.role);
   return value === 'user' || value === 'admin' ? value : null;
@@ -22,9 +34,15 @@ export function getStoredUser(): User | null {
   const raw = localStorage.getItem(STORAGE_KEYS.user);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as User;
-    if (parsed?.id && (parsed.role === 'user' || parsed.role === 'admin')) {
-      return parsed;
+    const parsed = JSON.parse(raw) as Partial<User> & { id?: unknown };
+    if (parsed?.role === 'user' || parsed?.role === 'admin') {
+      const normalizedId = normalizeUserId(parsed.id, parsed.role);
+      if (normalizedId && typeof parsed.name === 'string' && parsed.name.trim()) {
+        return {
+          ...parsed,
+          id: normalizedId,
+        } as User;
+      }
     }
     return null;
   } catch {

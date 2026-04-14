@@ -9,6 +9,21 @@ import { createServer as createViteServer } from 'vite';
 const app = express();
 const PORT = 3000;
 
+const DUMMY_ACCOUNTS = [
+  {
+    email: 'admin@sportify.com',
+    password: 'admin1234',
+    role: 'admin' as const,
+    name: 'Super Admin',
+  },
+  {
+    email: 'user@sportify.com',
+    password: 'user1234',
+    role: 'user' as const,
+    name: 'Sobat Sportify',
+  },
+];
+
 app.use(cors());
 app.use(express.json());
 
@@ -63,8 +78,10 @@ db.exec(`
 // Insert Dummy Data if empty
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
 if (userCount.count === 0) {
-  db.prepare("INSERT INTO users (role, name) VALUES ('admin', 'Super Admin')").run();
-  db.prepare("INSERT INTO users (role, name) VALUES ('user', 'John Doe')").run();
+  const insertUser = db.prepare('INSERT INTO users (role, name) VALUES (?, ?)');
+  DUMMY_ACCOUNTS.forEach((account) => {
+    insertUser.run(account.role, account.name);
+  });
   const venueInfo = db.prepare("INSERT INTO venues (name, location, description) VALUES ('Ayo Venue', 'Jakarta', 'Best sports venue in town')").run();
   
   const insertField = db.prepare("INSERT INTO fields (venue_id, name, type, price_per_hour) VALUES (?, ?, ?, ?)");
@@ -104,12 +121,38 @@ app.use('/uploads', express.static(uploadDir));
 
 // Auth (Dummy)
 app.post('/api/auth/login', (req, res) => {
-  const { role } = req.body;
-  if (role !== 'admin' && role !== 'user') {
-    return res.status(400).json({ error: 'Invalid role' });
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  const fallbackRole = req.body?.role;
+
+  if (!email || !password) {
+    if (fallbackRole !== 'admin' && fallbackRole !== 'user') {
+      return res.status(400).json({ error: 'Email dan password wajib diisi' });
+    }
+    const legacyUser = db.prepare('SELECT id, role, name FROM users WHERE role = ? LIMIT 1').get(fallbackRole);
+    if (!legacyUser) {
+      return res.status(404).json({ error: 'User tidak ditemukan untuk role tersebut' });
+    }
+    return res.json(legacyUser);
   }
-  const user = db.prepare('SELECT * FROM users WHERE role = ? LIMIT 1').get(role);
-  res.json(user);
+
+  const matchedAccount = DUMMY_ACCOUNTS.find((account) => account.email === email && account.password === password);
+  if (!matchedAccount) {
+    return res.status(401).json({ error: 'Email atau password tidak valid' });
+  }
+
+  const user = db
+    .prepare('SELECT id, role, name FROM users WHERE role = ? LIMIT 1')
+    .get(matchedAccount.role) as { id: number; role: 'admin' | 'user'; name: string } | undefined;
+
+  if (!user) {
+    return res.status(500).json({ error: 'Dummy user belum tersedia di server' });
+  }
+
+  res.json({
+    ...user,
+    email: matchedAccount.email,
+  });
 });
 
 // Fields
@@ -165,10 +208,64 @@ app.get('/api/bookings', (req, res) => {
 });
 
 app.post('/api/bookings', (req, res) => {
-  const { user_id, field_id, booking_date, start_time, end_time } = req.body;
-  
+  const payload = req.body ?? {};
+  const userIdRaw = payload.user_id;
+  const fieldIdRaw = payload.field_id;
+  const bookingDate = payload.booking_date;
+  const startTime = payload.start_time;
+  const endTime = payload.end_time;
+  const userEmail = payload.user_email;
+
+  const fieldId = Number(fieldIdRaw);
+  if (!Number.isInteger(fieldId) || fieldId <= 0) {
+    return res.status(400).json({ error: 'field_id wajib berupa angka valid' });
+  }
+
+  if (typeof bookingDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) {
+    return res.status(400).json({ error: 'booking_date wajib berformat yyyy-mm-dd' });
+  }
+
+  if (typeof startTime !== 'string' || !/^\d{2}:\d{2}$/.test(startTime)) {
+    return res.status(400).json({ error: 'start_time wajib berformat HH:mm' });
+  }
+
+  if (typeof endTime !== 'string' || !/^\d{2}:\d{2}$/.test(endTime)) {
+    return res.status(400).json({ error: 'end_time wajib berformat HH:mm' });
+  }
+
+  let userId = Number(userIdRaw);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    const legacyRoleFromId = userIdRaw === 'admin_1' ? 'admin' : userIdRaw === 'user_1' ? 'user' : null;
+    const roleFromEmail =
+      typeof userEmail === 'string' && userEmail.trim().toLowerCase() === 'admin@sportify.com'
+        ? 'admin'
+        : typeof userEmail === 'string' && userEmail.trim().toLowerCase() === 'user@sportify.com'
+          ? 'user'
+          : null;
+    const resolvedRole = legacyRoleFromId ?? roleFromEmail;
+
+    if (resolvedRole) {
+      const mappedUser = db.prepare('SELECT id FROM users WHERE role = ? LIMIT 1').get(resolvedRole) as { id: number } | undefined;
+      if (mappedUser) userId = mappedUser.id;
+    }
+  }
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'user_id tidak valid. Silakan login ulang.' });
+  }
+
+  const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(userId) as { id: number } | undefined;
+  if (!userExists) {
+    return res.status(400).json({ error: 'User tidak ditemukan. Silakan login ulang.' });
+  }
+
+  const fieldExists = db.prepare('SELECT id FROM fields WHERE id = ?').get(fieldId) as { id: number } | undefined;
+  if (!fieldExists) {
+    return res.status(400).json({ error: 'Lapangan tidak ditemukan' });
+  }
+
   // Validate operational hours (13:00 - 20:00)
-  const startHour = parseInt(start_time.split(':')[0]);
+  const startHour = parseInt(startTime.split(':')[0], 10);
   if (startHour < 13 || startHour >= 20) {
     return res.status(400).json({ error: 'Booking only allowed between 13:00 and 20:00' });
   }
@@ -176,13 +273,19 @@ app.post('/api/bookings', (req, res) => {
   try {
     const info = db.prepare(
       'INSERT INTO bookings (user_id, field_id, booking_date, start_time, end_time) VALUES (?, ?, ?, ?, ?)'
-    ).run(user_id, field_id, booking_date, start_time, end_time);
+    ).run(userId, fieldId, bookingDate, startTime, endTime);
     
     res.status(201).json({ id: info.lastInsertRowid, message: 'Booking created successfully' });
   } catch (error: any) {
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       res.status(409).json({ error: 'Double booking detected. Slot is already taken.' });
+    } else if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+      res.status(400).json({ error: 'User atau lapangan tidak valid untuk booking ini' });
     } else {
+      console.error('Booking create failed:', {
+        error,
+        payload,
+      });
       res.status(500).json({ error: 'Internal server error' });
     }
   }

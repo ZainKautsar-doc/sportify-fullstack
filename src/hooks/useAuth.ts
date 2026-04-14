@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { User, UserRole } from '@/src/types/domain';
 import { clearAuthStorage, getStoredRole, getStoredUser, setStoredRole, setStoredUser } from '@/src/lib/storage';
+import { apiRequest } from '@/src/lib/api';
 import { toast } from 'sonner';
 
 export function useAuth() {
@@ -15,35 +16,27 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(async (email?: string, password?: string) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    let nextRole: UserRole | null = null;
-    let nextUser: User | null = null;
-
-    if (email === 'admin@sportify.com' && password === 'admin1234') {
-      nextRole = 'admin';
-      nextUser = {
-        id: 'admin_1',
-        email: 'admin@sportify.com',
-        name: 'Super Admin',
-        role: 'admin',
-        phone: '081234567890',
-        createdAt: new Date().toISOString()
-      };
-    } else if (email === 'user@sportify.com' && password === 'user1234') {
-      nextRole = 'user';
-      nextUser = {
-        id: 'user_1',
-        email: 'user@sportify.com',
-        name: 'Sobat Sportify',
-        role: 'user',
-        phone: '081987654321',
-        createdAt: new Date().toISOString()
-      };
-    } else {
-      throw new Error('Email atau password tidak valid');
+    if (!email || !password) {
+      throw new Error('Email dan password wajib diisi');
     }
+
+    const loginResult = await apiRequest<User>('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!Number.isInteger(loginResult.id) || (loginResult.role !== 'admin' && loginResult.role !== 'user')) {
+      throw new Error('Data user dari server tidak valid');
+    }
+
+    const nextRole: UserRole = loginResult.role;
+    const nextUser: User = {
+      ...loginResult,
+      id: Number(loginResult.id),
+      email: loginResult.email ?? email.toLowerCase(),
+      createdAt: loginResult.createdAt ?? new Date().toISOString(),
+    };
 
     setRole(nextRole);
     setUser(nextUser);

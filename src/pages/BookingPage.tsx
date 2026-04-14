@@ -111,6 +111,7 @@ export default function BookingPage({ user }: BookingPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user.id,
+          user_email: user.email,
           field_id: selectedField.id,
           booking_date: selectedDate,
           start_time: selectedTime,

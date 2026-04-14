@@ -4,6 +4,9 @@ export interface User {
   id: number;
   role: UserRole;
   name: string;
+  email?: string;
+  phone?: string;
+  createdAt?: string;
 }
 
 export interface Field {

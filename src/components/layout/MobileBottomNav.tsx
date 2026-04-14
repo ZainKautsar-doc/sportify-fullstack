@@ -17,9 +17,9 @@ interface NavItem {
 export default function MobileBottomNav({ role }: MobileBottomNavProps) {
   const location = useLocation();
 
-  const bookingHref = role === 'user' ? '/booking' : '/pilih-role?next=%2Fbooking';
-  const scheduleHref = role === 'user' ? '/jadwal' : '/pilih-role?next=%2Fjadwal';
-  const profileHref = role === 'user' ? '/profil' : '/pilih-role?next=%2Fprofil';
+  const bookingHref = role === 'user' ? '/booking' : '/login?next=%2Fbooking';
+  const scheduleHref = role === 'user' ? '/jadwal' : '/login?next=%2Fjadwal';
+  const profileHref = role === 'user' ? '/profil' : '/login?next=%2Fprofil';
 
   const navItems: NavItem[] =
     role === 'admin'

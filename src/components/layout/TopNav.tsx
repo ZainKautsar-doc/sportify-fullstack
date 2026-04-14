@@ -30,8 +30,8 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const bookingHref   = role === 'user' ? '/booking'  : '/pilih-role?next=%2Fbooking';
-  const scheduleHref  = role === 'user' ? '/jadwal'   : '/pilih-role?next=%2Fjadwal';
+  const bookingHref   = role === 'user' ? '/booking'  : '/login?next=%2Fbooking';
+  const scheduleHref  = role === 'user' ? '/jadwal'   : '/login?next=%2Fjadwal';
   const userInitial   = userName ? userName.slice(0, 1).toUpperCase() : 'S';
 
   useEffect(() => {
@@ -167,8 +167,8 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
               </>
             ) : (
               <>
-                <button onClick={() => navigate('/pilih-role')} className={outlineBtn(transparent)}>Masuk</button>
-                <button onClick={() => navigate('/pilih-role')} className={primaryBtn}>Daftar</button>
+                <button onClick={() => navigate('/login')} className={outlineBtn(transparent)}>Masuk</button>
+                <button onClick={() => navigate('/login')} className={primaryBtn}>Daftar</button>
               </>
             )}
           </div>
@@ -222,10 +222,10 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
                 </>
               ) : (
                 <>
-                  <button onClick={() => navigate('/pilih-role')} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition-colors">
+                  <button onClick={() => navigate('/login')} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition-colors">
                     Masuk
                   </button>
-                  <button onClick={() => navigate('/pilih-role')} className="flex-1 py-2.5 rounded-xl bg-[#0f2d5e] text-white font-semibold text-sm hover:bg-[#14407f] transition-colors">
+                  <button onClick={() => navigate('/login')} className="flex-1 py-2.5 rounded-xl bg-[#0f2d5e] text-white font-semibold text-sm hover:bg-[#14407f] transition-colors">
                     Daftar
                   </button>
                 </>

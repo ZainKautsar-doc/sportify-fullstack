@@ -35,7 +35,7 @@ export default function HomePage({ role }: HomePageProps) {
   const [error, setError] = useState<string | null>(null);
 
   const bookingBaseHref =
-    role === "user" ? "/booking" : "/pilih-role?next=%2Fbooking";
+    role === "user" ? "/booking" : "/login?next=%2Fbooking";
 
   const scrollToExplore = useCallback(() => {
     document
@@ -170,7 +170,7 @@ export default function HomePage({ role }: HomePageProps) {
                 const bookingHref =
                   role === "user"
                     ? `/booking/${field.id}`
-                    : `/pilih-role?next=${encodeURIComponent(`/booking/${field.id}`)}`;
+                    : `/login?next=${encodeURIComponent(`/booking/${field.id}`)}`;
                 return (
                   <div key={field.id}>
                     <FieldCard

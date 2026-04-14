@@ -13,7 +13,7 @@ export default function RequireRole({ currentRole, allowedRole, children }: Requ
 
   if (currentRole !== allowedRole) {
     const next = encodeURIComponent(`${location.pathname}${location.search}`);
-    return <Navigate to={`/pilih-role?next=${next}`} replace />;
+    return <Navigate to={`/login?next=${next}`} replace />;
   }
 
   return <>{children}</>;

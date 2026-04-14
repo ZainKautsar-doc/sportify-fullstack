@@ -83,7 +83,7 @@ export default function FieldDetailPage({ role }: FieldDetailPageProps) {
       navigate(target);
       return;
     }
-    navigate(`/pilih-role?next=${encodeURIComponent(target)}`);
+    navigate(`/login?next=${encodeURIComponent(target)}`);
   };
 
   if (isLoading) {

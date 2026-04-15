@@ -327,7 +327,7 @@ export default function AdminDashboard() {
       {/* BOOKINGS TAB */}
       {activeTab === 'bookings' && (
         <div className="space-y-6">
-          <AdminCalendar bookings={bookings} isLoading={isLoading} enableDummyPreview={bookings.length === 0 && canUseDummyCalendar} />
+          <AdminCalendar bookings={bookings} isLoading={isLoading} />
           <Card className="overflow-hidden p-0">
             <div className="border-b border-slate-100 px-6 py-4">
               <h2 className="font-display text-xl font-bold text-slate-900">Daftar Booking Keseluruhan</h2>

@@ -61,17 +61,18 @@ export default function SlotDetailModal({ open, date, onClose }: SlotDetailModal
   // Filter bookings specifically for the selected field
   const fieldBookings = bookings.filter(b => b.field_id === Number(selectedFieldId));
 
-  // Map bookings by start time for easy lookup
+  // Map bookings by start time for easy lookup and slice to HH:mm
   const bookingsByTime = fieldBookings.reduce<Record<string, Booking[]>>((acc, booking) => {
-    if (!acc[booking.start_time]) acc[booking.start_time] = [];
-    acc[booking.start_time].push(booking);
+    const startHour = booking.start_time.slice(0, 5); // Ensure HH:mm format
+    if (!acc[startHour]) acc[startHour] = [];
+    acc[startHour].push(booking);
     return acc;
   }, {});
 
   return (
     <Modal
       open={open}
-      title={date ? `Detail Slot ${format(date, 'EEEE, d MMMM yyyy', { locale: localeId })}` : 'Detail Slot'}
+      title={date ? `Detail Slot - ${new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Detail Slot'}
       onClose={onClose}
       className="max-w-3xl"
     >

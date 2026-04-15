@@ -1,28 +1,49 @@
-import { useMemo, useState } from 'react';
-import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, parseISO, startOfMonth, startOfWeek } from 'date-fns';
+import { useEffect, useMemo, useState } from 'react';
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, startOfMonth, startOfWeek } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Booking } from '@/src/types/domain';
 import { formatCurrency } from '@/src/lib/format';
+import { apiRequest } from '@/src/lib/api';
 import { Card } from '@/src/components/ui/Card';
 import CalendarDay from '@/src/components/admin/calendar/CalendarDay';
 import SlotDetailModal from '@/src/components/admin/calendar/SlotDetailModal';
 import Skeleton from '@/src/components/ui/Skeleton';
 
 interface AdminCalendarProps {
-  bookings: Booking[];
+  bookings: Booking[]; // Still used for revenue if needed, or we could fetch stats
   isLoading?: boolean;
-  enableDummyPreview?: boolean; // Prop kept for backward compatibility if needed, but unused
 }
 
 const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
+interface BookingSummary {
+  booking_date: string;
+  total: number;
+}
+
 export default function AdminCalendar({ bookings, isLoading = false }: AdminCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [summaries, setSummaries] = useState<BookingSummary[]>([]);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
-  // Directly use real bookings
-  const activeBookings = bookings;
+  // Fetch summary when month changes
+  useEffect(() => {
+    const fetchSummary = async () => {
+      setIsSummaryLoading(true);
+      try {
+        const monthFilter = format(currentMonth, 'yyyy-MM');
+        const data = await apiRequest<BookingSummary[]>(`/api/bookings/summary?month=${monthFilter}`);
+        setSummaries(data);
+      } catch (err) {
+        console.error('Gagal memuat summary kalender', err);
+      } finally {
+        setIsSummaryLoading(false);
+      }
+    };
+    void fetchSummary();
+  }, [currentMonth]);
 
   const monthRange = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
@@ -30,38 +51,20 @@ export default function AdminCalendar({ bookings, isLoading = false }: AdminCale
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
 
-  const bookingsByDate = useMemo(() => {
-    return activeBookings.reduce<Record<string, Booking[]>>((acc, booking) => {
-      if (!acc[booking.booking_date]) acc[booking.booking_date] = [];
-      acc[booking.booking_date].push(booking);
-      return acc;
-    }, {});
-  }, [activeBookings]);
+  const totalMonthlyBooking = summaries.reduce((sum, item) => sum + item.total, 0);
 
-  const monthBookings = useMemo(
-    () => activeBookings.filter((booking) => isSameMonth(parseISO(booking.booking_date), currentMonth)),
-    [activeBookings, currentMonth],
-  );
-
-  const totalMonthlyBooking = monthBookings.length;
-  // Handle sum calculation safely, COALESCE is usually enough but fallback to 0 is safe
-  const monthlyRevenue = monthBookings
-    .filter((booking) => booking.status === 'confirmed' || booking.status === 'completed')
+  // Revenue uses the fetched bookings directly (fallback to 0 handle NaNs)
+  const monthlyRevenue = bookings
+    .filter((booking) => ['confirmed', 'completed'].includes(booking.status))
     .reduce((sum, booking) => sum + (Number(booking.price_per_hour) || 0), 0);
 
   const busiestDay = useMemo(() => {
-    if (monthBookings.length === 0) return null;
-    const counter = monthBookings.reduce<Record<string, number>>((acc, booking) => {
-      acc[booking.booking_date] = (acc[booking.booking_date] ?? 0) + 1;
-      return acc;
-    }, {});
+    if (summaries.length === 0) return null;
+    const top = [...summaries].sort((a, b) => b.total - a.total)[0];
+    return { date: top.booking_date, count: top.total };
+  }, [summaries]);
 
-    const top = Object.entries(counter).sort((a, b) => Number(b[1]) - Number(a[1]))[0];
-    if (!top) return null;
-    return { date: top[0], count: top[1] };
-  }, [monthBookings]);
-
-  if (isLoading) {
+  if (isLoading || isSummaryLoading && summaries.length === 0) {
     return (
       <Card className="space-y-4 border-slate-200/80">
         <Skeleton className="h-7 w-60" />
@@ -110,8 +113,8 @@ export default function AdminCalendar({ bookings, isLoading = false }: AdminCale
           <SummaryChip
             label="Hari paling ramai"
             value={
-              busiestDay
-                ? `${format(parseISO(busiestDay.date), 'd MMM', { locale: id })} (${busiestDay.count} booking)`
+              busiestDay && busiestDay.count > 0
+                ? `${new Date(busiestDay.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} (${busiestDay.count} booking)`
                 : 'Belum ada booking'
             }
             tone="amber"
@@ -130,7 +133,8 @@ export default function AdminCalendar({ bookings, isLoading = false }: AdminCale
           <div className="grid grid-cols-7 gap-2 p-2">
             {monthRange.map((day) => {
               const key = format(day, 'yyyy-MM-dd');
-              const count = (bookingsByDate[key] ?? []).filter((booking) => booking.status !== 'rejected').length;
+              const summary = summaries.find(s => s.booking_date === key);
+              const count = summary ? summary.total : 0;
               return (
                 <div key={key}>
                   <CalendarDay day={day} monthDate={currentMonth} count={count} onSelect={setSelectedDate} selected={selectedDate ? isSameDay(selectedDate, day) : false} />

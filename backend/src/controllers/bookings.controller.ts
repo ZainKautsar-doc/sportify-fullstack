@@ -5,7 +5,7 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
   const { date, field_id, user_id } = req.query;
   try {
     let query = `
-      SELECT b.id, b.user_id, b.field_id, b.booking_date, b.start_time, b.end_time, b.status, b.total_price,
+      SELECT b.id, b.user_id, b.field_id, TO_CHAR(b.booking_date, 'YYYY-MM-DD') as booking_date, b.start_time, b.end_time, b.status, b.total_price,
              f.name as field_name, f.type as field_type, f.price_per_hour, u.name as user_name 
       FROM bookings b 
       JOIN fields f ON b.field_id = f.id 
@@ -36,6 +36,37 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
   } catch (error: any) {
     console.error('Error in getBookings:', error);
     res.status(500).json({ error: 'Internal server error: ' + (error.message || 'Unknown Error') });
+  }
+};
+
+export const getBookingSummary = async (req: Request, res: Response): Promise<any> => {
+  const { month } = req.query; // format YYYY-MM
+  try {
+    let query = `
+      SELECT TO_CHAR(booking_date, 'YYYY-MM-DD') as booking_date, COUNT(*) as total
+      FROM bookings
+      WHERE status != 'rejected'
+    `;
+    const params: any[] = [];
+    
+    if (month && typeof month === 'string') {
+      query += ` AND TO_CHAR(booking_date, 'YYYY-MM') = $1`;
+      params.push(month);
+    }
+    
+    query += ` GROUP BY booking_date ORDER BY booking_date ASC`;
+    const { rows } = await pool.query(query, params);
+    
+    // Parse total to integer since COUNT returns string in pg
+    const formatted = rows.map((r: any) => ({
+      booking_date: r.booking_date,
+      total: parseInt(r.total, 10)
+    }));
+    
+    res.status(200).json(formatted);
+  } catch (error: any) {
+    console.error('Error in getBookingSummary:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 

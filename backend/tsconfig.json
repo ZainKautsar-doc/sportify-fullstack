@@ -1,0 +1,23 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "strict": true,
+
+    // Environment Settings
+    "module": "CommonJS",
+    "moduleResolution": "Bundler",
+    "target": "es2022",
+    "types": ["node"],
+    "ignoreDeprecations": "6.0",
+    
+    // Other Outputs
+    "sourceMap": true,
+
+    // Recommended Options
+    "skipLibCheck": true
+  }
+}

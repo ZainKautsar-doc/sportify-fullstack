@@ -13,7 +13,7 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
     `;
     const params: any[] = [];
     let paramIndex = 1;
-    
+
     if (date) {
       query += ` AND b.booking_date = $${paramIndex++}`;
       params.push(date);
@@ -26,7 +26,7 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
       query += ` AND b.user_id = $${paramIndex++}`;
       params.push(user_id);
     }
-    
+
     query += ' ORDER BY b.booking_date DESC, b.start_time DESC';
     const { rows } = await pool.query(query, params);
     res.json(rows);
@@ -39,7 +39,6 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
 
 export const createBooking = async (req: Request, res: Response): Promise<any> => {
   const payload = req.body ?? {};
-  // Keeping exact same original logic
   const userIdRaw = payload.user_id;
   const fieldIdRaw = payload.field_id;
   const bookingDate = payload.booking_date;
@@ -49,9 +48,9 @@ export const createBooking = async (req: Request, res: Response): Promise<any> =
 
   const fieldId = Number(fieldIdRaw);
   if (!Number.isInteger(fieldId) || fieldId <= 0) return res.status(400).json({ error: 'field_id wajib berupa angka valid' });
-  if (typeof bookingDate !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(bookingDate)) return res.status(400).json({ error: 'booking_date wajib berformat yyyy-mm-dd' });
-  if (typeof startTime !== 'string' || !/^\\d{2}:\\d{2}$/.test(startTime)) return res.status(400).json({ error: 'start_time wajib berformat HH:mm' });
-  if (typeof endTime !== 'string' || !/^\\d{2}:\\d{2}$/.test(endTime)) return res.status(400).json({ error: 'end_time wajib berformat HH:mm' });
+  if (typeof bookingDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) return res.status(400).json({ error: 'booking_date wajib berformat yyyy-mm-dd' });
+  if (typeof startTime !== 'string' || !/^\d{2}:\d{2}$/.test(startTime)) return res.status(400).json({ error: 'start_time wajib berformat HH:mm' });
+  if (typeof endTime !== 'string' || !/^\d{2}:\d{2}$/.test(endTime)) return res.status(400).json({ error: 'end_time wajib berformat HH:mm' });
 
   // Dummy fallback logic for id matching
   let userId = Number(userIdRaw);
@@ -71,28 +70,54 @@ export const createBooking = async (req: Request, res: Response): Promise<any> =
   }
 
   const startHour = parseInt(startTime.split(':')[0], 10);
-  if (startHour < 13 || startHour >= 20) return res.status(400).json({ error: 'Booking only allowed between 13:00 and 20:00' });
+  const endHour = parseInt(endTime.split(':')[0], 10);
 
+  if (startHour < 13 || startHour >= 20) return res.status(400).json({ error: 'Booking only allowed between 13:00 and 20:00' });
+  if (startHour >= endHour) return res.status(400).json({ error: 'Waktu selesai harus setelah waktu mulai' });
+
+  const duration = endHour - startHour;
+
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
-      'INSERT INTO bookings (user_id, field_id, booking_date, start_time, end_time) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [userId, fieldId, bookingDate, startTime, endTime]
+    await client.query('BEGIN');
+
+    // 1. Validasi field sekaligus ambil price_per_hour
+    const fieldRes = await client.query('SELECT price_per_hour FROM fields WHERE id = $1', [fieldId]);
+    if (fieldRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Lapangan (field) tidak ditemukan' });
+    }
+
+    const pricePerHour = parseFloat(fieldRes.rows[0].price_per_hour);
+    const totalPrice = pricePerHour * duration;
+    const status = 'pending';
+
+    // 2. Insert Booking dengan parameter komplit, status default, total_price, dan mencegah SQL Injection
+    const insertRes = await client.query(
+      'INSERT INTO bookings (user_id, field_id, booking_date, start_time, end_time, status, total_price) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [userId, fieldId, bookingDate, startTime, endTime, status, totalPrice]
     );
-    res.status(201).json({ id: rows[0].id, message: 'Booking created successfully' });
+
+    await client.query('COMMIT');
+    res.status(201).json({ id: insertRes.rows[0].id, message: 'Booking created successfully' });
   } catch (error: any) {
-    if (error.code === '23505') { // Postgres unique constraint violation error code
+    await client.query('ROLLBACK'); // Rollback jika ada error
+    console.error('Error in createBooking:', error);
+
+    if (error.code === '23505') { // Postgres unique constraint violation
       res.status(409).json({ error: 'Double booking detected. Slot is already taken.' });
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error: ' + (error.message || 'Unknown Error') });
     }
+  } finally {
+    client.release();
   }
 };
 
 export const updateBookingStatus = async (req: Request, res: Response): Promise<any> => {
   const { status } = req.body;
   const { id } = req.params;
-  
+
   if (!['pending', 'confirmed', 'rejected', 'completed'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }

@@ -4,7 +4,6 @@ import { id } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Booking } from '@/src/types/domain';
 import { formatCurrency } from '@/src/lib/format';
-import { buildDummyBookingsForMonth } from '@/src/lib/adminCalendarDummy';
 import { Card } from '@/src/components/ui/Card';
 import CalendarDay from '@/src/components/admin/calendar/CalendarDay';
 import SlotDetailModal from '@/src/components/admin/calendar/SlotDetailModal';
@@ -13,19 +12,17 @@ import Skeleton from '@/src/components/ui/Skeleton';
 interface AdminCalendarProps {
   bookings: Booking[];
   isLoading?: boolean;
-  enableDummyPreview?: boolean;
+  enableDummyPreview?: boolean; // Prop kept for backward compatibility if needed, but unused
 }
 
 const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
-export default function AdminCalendar({ bookings, isLoading = false, enableDummyPreview = false }: AdminCalendarProps) {
+export default function AdminCalendar({ bookings, isLoading = false }: AdminCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const activeBookings = useMemo(() => {
-    if (bookings.length > 0 || !enableDummyPreview) return bookings;
-    return buildDummyBookingsForMonth(currentMonth);
-  }, [bookings, currentMonth, enableDummyPreview]);
+  // Directly use real bookings
+  const activeBookings = bookings;
 
   const monthRange = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
@@ -47,9 +44,10 @@ export default function AdminCalendar({ bookings, isLoading = false, enableDummy
   );
 
   const totalMonthlyBooking = monthBookings.length;
+  // Handle sum calculation safely, COALESCE is usually enough but fallback to 0 is safe
   const monthlyRevenue = monthBookings
     .filter((booking) => booking.status === 'confirmed' || booking.status === 'completed')
-    .reduce((sum, booking) => sum + booking.price_per_hour, 0);
+    .reduce((sum, booking) => sum + (Number(booking.price_per_hour) || 0), 0);
 
   const busiestDay = useMemo(() => {
     if (monthBookings.length === 0) return null;
@@ -143,7 +141,7 @@ export default function AdminCalendar({ bookings, isLoading = false, enableDummy
         </div>
       </Card>
 
-      <SlotDetailModal open={Boolean(selectedDate)} date={selectedDate} bookings={activeBookings} onClose={() => setSelectedDate(null)} />
+      <SlotDetailModal open={Boolean(selectedDate)} date={selectedDate} onClose={() => setSelectedDate(null)} />
     </>
   );
 }

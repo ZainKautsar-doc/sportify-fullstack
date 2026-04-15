@@ -8,6 +8,7 @@ import Footer from '@/src/components/layout/Footer';
 import RequireRole from '@/src/components/auth/RequireRole';
 import HomePage from '@/src/pages/HomePage';
 import LoginPage from '@/src/pages/LoginPage';
+import RegisterPage from '@/src/pages/RegisterPage';
 import { useAuth } from '@/src/hooks/useAuth';
 import BookingPage from '@/src/pages/BookingPage';
 import AdminDashboard from '@/src/pages/AdminDashboard';
@@ -75,6 +76,7 @@ function AppContent({
         <Routes>
           <Route path="/" element={role === 'admin' ? <Navigate to="/admin" replace /> : <HomePage role={role} />} />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/lapangan/:fieldId" element={role === 'admin' ? <Navigate to="/admin" replace /> : <FieldDetailPage role={role} />} />
           <Route
             path="/booking"

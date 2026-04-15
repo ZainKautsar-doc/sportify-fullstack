@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Mail, Lock, Sparkles, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
 
@@ -97,6 +98,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <p>Admin: admin@sportify.com / admin1234</p>
               <p>User: user@sportify.com / user1234</p>
             </div>
+          </div>
+
+          <div className="mt-6 text-center text-sm text-slate-500">
+            Belum punya akun?{' '}
+            <Link to="/register" className="font-semibold text-[#0f2d5e] hover:underline">
+              Daftar
+            </Link>
           </div>
         </form>
       </Card>

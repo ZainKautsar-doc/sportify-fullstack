@@ -15,6 +15,15 @@ import EmptyState from '@/src/components/ui/EmptyState';
 import ErrorState from '@/src/components/ui/ErrorState';
 import AdminCalendar from '@/src/components/admin/calendar/AdminCalendar';
 
+const formatDate = (date: string | null | undefined) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
 const INITIAL_FORM = { name: '', type: 'Futsal', price_per_hour: '' };
 
 interface NewFieldForm {
@@ -266,7 +275,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-semibold text-slate-900">{p.field_name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{p.booking_date}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{p.booking_date ? formatDate(p.booking_date) : '-'}</p>
                         <p className="text-xs font-medium text-indigo-600 bg-indigo-50 inline-block px-2 py-0.5 rounded-md mt-1">{p.time}</p>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -359,9 +368,9 @@ export default function AdminDashboard() {
                           <p className="text-xs text-slate-500">{booking.field_type}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p>{booking.booking_date}</p>
+                          <p>{booking.booking_date ? formatDate(booking.booking_date) : '-'}</p>
                           <p className="text-xs text-slate-500">
-                            {booking.start_time} - {booking.end_time}
+                            {booking.start_time?.slice(0, 5)} - {booking.end_time?.slice(0, 5)}
                           </p>
                         </td>
                         <td className="px-6 py-4">

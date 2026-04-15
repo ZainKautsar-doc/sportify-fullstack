@@ -53,3 +53,14 @@ export interface AvailabilitySlot {
   time: string;      // "13:00", "14:00", ...
   available: boolean;
 }
+
+export interface AdminPayment {
+  payment_id: number;
+  booking_id: number;
+  field_name: string;
+  user_name: string;
+  booking_date: string;
+  time: string;
+  status: 'pending' | 'verified' | 'rejected';
+  payment_proof: string;
+}

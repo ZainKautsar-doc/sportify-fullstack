@@ -1,9 +1,9 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { format, subDays } from 'date-fns';
-import { CheckCircle2, Clock3, Eye, Plus, TrendingUp, Wallet, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock3, Eye, Plus, TrendingUp, Wallet, XCircle, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import type { AdminStats, Booking, Field } from '@/src/types/domain';
+import type { AdminStats, Booking, Field, AdminPayment } from '@/src/types/domain';
 import { apiRequest } from '@/src/lib/api';
 import { formatCurrency } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
@@ -26,10 +26,11 @@ interface NewFieldForm {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [payments, setPayments] = useState<AdminPayment[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'bookings' | 'fields'>('bookings');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'fields' | 'payments'>('payments'); // Default to payments
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
   const [newField, setNewField] = useState<NewFieldForm>(INITIAL_FORM);
   const [submittingField, setSubmittingField] = useState(false);
@@ -39,14 +40,16 @@ export default function AdminDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const [statsData, bookingsData, fieldsData] = await Promise.all([
+      const [statsData, bookingsData, fieldsData, paymentsData] = await Promise.all([
         apiRequest<AdminStats>('/api/admin/stats'),
         apiRequest<Booking[]>('/api/bookings'),
         apiRequest<Field[]>('/api/fields'),
+        apiRequest<AdminPayment[]>('/api/admin/payments'),
       ]);
       setStats(statsData);
       setBookings(bookingsData);
       setFields(fieldsData);
+      setPayments(paymentsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ups, coba lagi ya');
     } finally {
@@ -69,6 +72,7 @@ export default function AdminDashboard() {
 
   const maxWeeklyCount = Math.max(...weeklyData.map((item) => item.count), 1);
 
+  // Fallback for direct booking status update
   const updateStatus = async (bookingId: number, status: Booking['status']) => {
     try {
       await apiRequest(`/api/bookings/${bookingId}/status`, {
@@ -83,12 +87,24 @@ export default function AdminDashboard() {
     }
   };
 
-  const openPaymentProof = async (bookingId: number) => {
+  const approvePayment = async (paymentId: number) => {
     try {
-      const payment = await apiRequest<{ proof_url: string }>(`/api/payments/${bookingId}`);
-      setSelectedProof(payment.proof_url);
+      await apiRequest(`/api/admin/payments/${paymentId}/approve`, { method: 'PUT' });
+      toast.success('Pembayaran disetujui, booking dikonfirmasi 🎉');
+      await fetchAllData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Bukti pembayaran belum tersedia');
+      toast.error(err instanceof Error ? err.message : 'Gagal menyetujui pembayaran');
+    }
+  };
+
+  const rejectPayment = async (paymentId: number) => {
+    if (!window.confirm('Yakin menolak pembayaran ini? Booking juga akan di-reject.')) return;
+    try {
+      await apiRequest(`/api/admin/payments/${paymentId}/reject`, { method: 'PUT' });
+      toast.success('Pembayaran ditolak.');
+      await fetchAllData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Gagal menolak pembayaran');
     }
   };
 
@@ -158,12 +174,22 @@ export default function AdminDashboard() {
             <h1 className="font-display text-3xl font-bold">Dashboard Sportify</h1>
             <p className="mt-2 text-sm text-white/80">Monitor booking mingguan, verifikasi pembayaran, dan kelola lapangan.</p>
           </div>
-          <div className="inline-flex rounded-2xl bg-white/10 p-1">
+          <div className="inline-flex rounded-2xl bg-white/10 p-1 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setActiveTab('payments')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                activeTab === 'payments' ? 'bg-white text-slate-900' : 'text-white/80 hover:text-white'
+              }`}
+            >
+              <CreditCard size={16} />
+              Pembayaran
+            </button>
             <button
               type="button"
               onClick={() => setActiveTab('bookings')}
               className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === 'bookings' ? 'bg-white text-slate-900' : 'text-white/80'
+                activeTab === 'bookings' ? 'bg-white text-slate-900' : 'text-white/80 hover:text-white'
               }`}
             >
               Bookings
@@ -172,7 +198,7 @@ export default function AdminDashboard() {
               type="button"
               onClick={() => setActiveTab('fields')}
               className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                activeTab === 'fields' ? 'bg-white text-slate-900' : 'text-white/80'
+                activeTab === 'fields' ? 'bg-white text-slate-900' : 'text-white/80 hover:text-white'
               }`}
             >
               Lapangan
@@ -209,12 +235,102 @@ export default function AdminDashboard() {
         </div>
       </Card>
 
-      {activeTab === 'bookings' ? (
+      {/* PAYMENTS TAB */}
+      {activeTab === 'payments' && (
+        <Card className="overflow-hidden p-0">
+          <div className="border-b border-slate-100 px-6 py-4">
+            <h2 className="font-display text-xl font-bold text-slate-900">Review Pembayaran</h2>
+            <p className="text-sm text-slate-500 mt-1">Approve pembayaran agar status booking otomatis jadi confirmed.</p>
+          </div>
+          {payments.length === 0 ? (
+            <div className="p-8">
+              <EmptyState title="Belum ada bukti yang masuk" description="User belum mengunggah bukti pembayaran apa pun." />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[780px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3 font-semibold">User</th>
+                    <th className="px-6 py-3 font-semibold">Info Booking</th>
+                    <th className="px-6 py-3 font-semibold text-center">Bukti</th>
+                    <th className="px-6 py-3 font-semibold">Status</th>
+                    <th className="px-6 py-3 font-semibold">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {payments.map((p) => (
+                    <tr key={p.payment_id} className="text-sm text-slate-700">
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-slate-900">{p.user_name}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-slate-900">{p.field_name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{p.booking_date}</p>
+                        <p className="text-xs font-medium text-indigo-600 bg-indigo-50 inline-block px-2 py-0.5 rounded-md mt-1">{p.time}</p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div 
+                          className="inline-block relative cursor-pointer rounded-lg overflow-hidden border border-slate-200 hover:border-indigo-500 transition-colors"
+                          onClick={() => setSelectedProof(p.payment_proof.startsWith('/uploads') ? p.payment_proof : `/uploads/${p.payment_proof}`)}
+                        >
+                          <div className="w-20 h-20 bg-slate-100 flex flex-col items-center justify-center group">
+                            <img 
+                              src={p.payment_proof.startsWith('/uploads') ? p.payment_proof : `/uploads/${p.payment_proof}`} 
+                              alt="Bukti Transfer"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Eye size={20} className="text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <PaymentStatusPill status={p.status} />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {p.status === 'pending' ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void approvePayment(p.payment_id)}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-emerald-600 bg-white border border-slate-200 transition hover:bg-emerald-50 hover:border-emerald-200"
+                                title="Approve"
+                              >
+                                <CheckCircle2 size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void rejectPayment(p.payment_id)}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-rose-600 bg-white border border-slate-200 transition hover:bg-rose-50 hover:border-rose-200"
+                                title="Reject"
+                              >
+                                <XCircle size={18} />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">No action</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* BOOKINGS TAB */}
+      {activeTab === 'bookings' && (
         <div className="space-y-6">
           <AdminCalendar bookings={bookings} isLoading={isLoading} enableDummyPreview={bookings.length === 0 && canUseDummyCalendar} />
           <Card className="overflow-hidden p-0">
             <div className="border-b border-slate-100 px-6 py-4">
-              <h2 className="font-display text-xl font-bold text-slate-900">Daftar Booking</h2>
+              <h2 className="font-display text-xl font-bold text-slate-900">Daftar Booking Keseluruhan</h2>
             </div>
             {bookings.length === 0 ? (
               <div className="p-8">
@@ -229,7 +345,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3 font-semibold">Lapangan</th>
                       <th className="px-6 py-3 font-semibold">Jadwal</th>
                       <th className="px-6 py-3 font-semibold">Status</th>
-                      <th className="px-6 py-3 font-semibold">Aksi</th>
+                      <th className="px-6 py-3 font-semibold">Aksi Manual</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -253,21 +369,13 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => void openPaymentProof(booking.id)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-indigo-600 transition hover:bg-indigo-50"
-                              title="Lihat bukti"
-                            >
-                              <Eye size={16} />
-                            </button>
                             {booking.status === 'pending' ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => void updateStatus(booking.id, 'confirmed')}
                                   className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-emerald-600 transition hover:bg-emerald-50"
-                                  title="Approve"
+                                  title="Paksa Approve (tanpa upload)"
                                 >
                                   <CheckCircle2 size={16} />
                                 </button>
@@ -291,7 +399,10 @@ export default function AdminDashboard() {
             )}
           </Card>
         </div>
-      ) : (
+      )}
+
+      {/* FIELDS TAB */}
+      {activeTab === 'fields' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_0.8fr]">
           <Card className="space-y-4">
             <h2 className="font-display text-xl font-bold text-slate-900">Daftar Lapangan</h2>
@@ -365,8 +476,9 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* MODAL BUKTI PEMBAYARAN */}
       <Modal open={Boolean(selectedProof)} title="Bukti Pembayaran" onClose={() => setSelectedProof(null)}>
-        {selectedProof ? <img src={selectedProof} alt="Bukti pembayaran" className="max-h-[70vh] w-full rounded-2xl object-contain" /> : null}
+        {selectedProof ? <img src={selectedProof} alt="Bukti pembayaran" className="max-h-[70vh] w-full rounded-2xl object-contain bg-slate-50 p-2 border border-slate-100" /> : null}
       </Modal>
     </div>
   );
@@ -412,4 +524,9 @@ function StatusPill({ status }: { status: Booking['status'] }) {
   return <Badge variant="neutral">Completed</Badge>;
 }
 
-
+function PaymentStatusPill({ status }: { status: string }) {
+  if (status === 'pending') return <Badge variant="pending">Reviewing</Badge>;
+  if (status === 'verified') return <Badge variant="confirmed">Verified</Badge>;
+  if (status === 'rejected') return <Badge variant="rejected">Rejected</Badge>;
+  return <Badge variant="neutral">{status}</Badge>;
+}

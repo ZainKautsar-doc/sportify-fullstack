@@ -57,10 +57,10 @@ export const uploadPayment = async (req: Request, res: Response): Promise<any> =
     } else {
       // Insert baru
       const { rows } = await pool.query(
-        `INSERT INTO payments (booking_id, amount, proof_url, status)
+        `INSERT INTO payments (booking_id, payment_proof, amount, status)
          VALUES ($1, $2, $3, 'pending')
          RETURNING id`,
-        [bookingId, booking.total_price, paymentProof]
+        [bookingId, paymentProof, booking.total_price]
       );
       paymentId = rows[0].id;
       console.log(`[Payment] Created payment #${paymentId} for booking #${bookingId}`);

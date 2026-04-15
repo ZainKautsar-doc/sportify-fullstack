@@ -1,36 +1,98 @@
 import { Request, Response } from 'express';
 import { pool } from '../lib/db';
 
+// POST /api/payments/upload
 export const uploadPayment = async (req: Request, res: Response): Promise<any> => {
-  const { booking_id, amount } = req.body;
   const file = req.file;
+  const { booking_id } = req.body;
 
+  // Validasi: file wajib ada
   if (!file) {
-    return res.status(400).json({ error: 'Payment proof image is required' });
+    return res.status(400).json({ error: 'File bukti pembayaran wajib diupload' });
   }
 
-  const proof_url = '/uploads/' + file.filename;
+  // Validasi: booking_id wajib ada
+  const bookingId = Number(booking_id);
+  if (!booking_id || !Number.isInteger(bookingId) || bookingId <= 0) {
+    return res.status(400).json({ error: 'booking_id tidak valid' });
+  }
+
+  // Path yang bisa diakses dari browser
+  const paymentProof = `/uploads/${file.filename}`;
 
   try {
-    const { rows } = await pool.query(
-      'INSERT INTO payments (booking_id, amount, proof_url) VALUES ($1, $2, $3) RETURNING id',
-      [booking_id, amount, proof_url]
+    // Cek booking valid
+    const bookingCheck = await pool.query(
+      'SELECT id, total_price, status FROM bookings WHERE id = $1',
+      [bookingId]
     );
-    res.status(201).json({ id: rows[0].id, message: 'Payment submitted successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (bookingCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking tidak ditemukan' });
+    }
+
+    const booking = bookingCheck.rows[0];
+    if (booking.status === 'confirmed' || booking.status === 'completed') {
+      return res.status(400).json({ error: 'Booking sudah dikonfirmasi, tidak bisa upload ulang' });
+    }
+
+    // Cek apakah sudah ada payment untuk booking ini (update jika ada, insert jika belum)
+    const existingPayment = await pool.query(
+      'SELECT id FROM payments WHERE booking_id = $1',
+      [bookingId]
+    );
+
+    let paymentId: number;
+
+    if (existingPayment.rows.length > 0) {
+      // Update — ganti proof yang lama
+      const { rows } = await pool.query(
+        `UPDATE payments 
+         SET proof_url = $1, status = 'pending', created_at = NOW()
+         WHERE booking_id = $2
+         RETURNING id`,
+        [paymentProof, bookingId]
+      );
+      paymentId = rows[0].id;
+      console.log(`[Payment] Updated payment #${paymentId} for booking #${bookingId}`);
+    } else {
+      // Insert baru
+      const { rows } = await pool.query(
+        `INSERT INTO payments (booking_id, amount, proof_url, status)
+         VALUES ($1, $2, $3, 'pending')
+         RETURNING id`,
+        [bookingId, booking.total_price, paymentProof]
+      );
+      paymentId = rows[0].id;
+      console.log(`[Payment] Created payment #${paymentId} for booking #${bookingId}`);
+    }
+
+    res.status(201).json({
+      id: paymentId,
+      booking_id: bookingId,
+      proof_url: paymentProof,
+      status: 'pending',
+      message: 'Bukti pembayaran berhasil diupload',
+    });
+  } catch (error: any) {
+    console.error('[Payment] Upload error:', error);
+    res.status(500).json({ error: 'Internal server error: ' + (error.message || 'Unknown error') });
   }
 };
 
+// GET /api/payments/:booking_id
 export const getPayment = async (req: Request, res: Response): Promise<any> => {
   const { booking_id } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM payments WHERE booking_id = $1', [booking_id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Payment not found' });
-    res.json(rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    const { rows } = await pool.query(
+      'SELECT * FROM payments WHERE booking_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [booking_id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Bukti pembayaran belum ditemukan' });
+    }
+    res.status(200).json(rows[0]);
+  } catch (error: any) {
+    console.error('[Payment] Get error:', error);
+    res.status(500).json({ error: 'Internal server error: ' + (error.message || 'Unknown error') });
   }
 };

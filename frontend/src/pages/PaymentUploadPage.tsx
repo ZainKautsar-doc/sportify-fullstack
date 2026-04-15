@@ -75,18 +75,19 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
     try {
       const formData = new FormData();
       formData.append('booking_id', String(booking.id));
-      formData.append('amount', String(booking.price_per_hour));
-      formData.append('proof', file);
+      // Gunakan field name 'file' sesuai backend (upload.single('file'))
+      formData.append('file', file);
 
-      await apiRequest('/api/payments', {
+      await apiRequest('/api/payments/upload', {
         method: 'POST',
         body: formData,
+        // Jangan set Content-Type — biarkan browser set boundary otomatis
       });
 
       setSubmitted(true);
-      toast.success('Bukti pembayaran berhasil dikirim');
+      toast.success('Bukti pembayaran berhasil dikirim! Tunggu konfirmasi admin ya 🎉');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Ups, coba lagi ya');
+      toast.error(err instanceof Error ? err.message : 'Upload gagal, coba lagi ya');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +155,7 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
               Info rekening
             </p>
             <p className="text-slate-700">BCA 1234567890 a.n Sportify Indonesia</p>
-            <p className="text-slate-700">Nominal: {formatCurrency(booking.price_per_hour)}</p>
+            <p className="text-slate-700">Nominal: {formatCurrency(booking.total_price)}</p>
           </div>
 
           <div className="space-y-2 rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
@@ -191,7 +192,7 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
           <SummaryRow label="Lapangan" value={booking.field_name} />
           <SummaryRow label="Tanggal" value={formatDateLabel(booking.booking_date)} />
           <SummaryRow label="Jam" value={`${booking.start_time} - ${booking.end_time}`} />
-          <SummaryRow label="Total" value={formatCurrency(booking.price_per_hour)} highlight />
+          <SummaryRow label="Total" value={formatCurrency(booking.total_price)} highlight />
 
           <div className="rounded-2xl bg-amber-50 p-4">
             <p className="text-sm font-semibold text-amber-800">Lagi dicek admin ya 👀</p>

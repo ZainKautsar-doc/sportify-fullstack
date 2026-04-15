@@ -18,10 +18,10 @@ app.get('/', (req, res) => {
   res.send('Sportify API Running...');
 });
 
-// Static files for uploads
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Static files: serve uploaded images
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/fields', fieldRoutes);
 app.use('/api/bookings', bookingRoutes);

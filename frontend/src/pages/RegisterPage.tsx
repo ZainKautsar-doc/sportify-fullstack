@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Mail, Lock, Sparkles, UserPlus, User as UserIcon } from 'lucide-react';
+import { Mail, Lock, UserPlus, User as UserIcon } from 'lucide-react';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { apiRequest } from '@/src/lib/api';
+import type { User } from '@/src/types/domain';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -17,56 +19,36 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
+
     if (!name || !email || !password || !confirmPassword) {
       setErrorMsg('Semua kolom wajib diisi');
       return;
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setErrorMsg('Format email tidak valid');
-      return;
-    }
-
     if (password.length < 6) {
       setErrorMsg('Password minimal 6 karakter');
       return;
     }
-
     if (password !== confirmPassword) {
       setErrorMsg('Konfirmasi password tidak cocok');
       return;
     }
 
     setLoading(true);
-    setErrorMsg('');
 
     try {
-      // Simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const storedUsersRaw = localStorage.getItem('registered_users');
-      const storedUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : [];
-
-      const emailExists = storedUsers.some((u: any) => u.email === email);
-      if (emailExists) {
-        throw new Error('Email sudah terdaftar');
-      }
-
-      const newUser = {
-        name,
-        email,
-        password,
-        role: 'user',
-      };
-
-      storedUsers.push(newUser);
-      localStorage.setItem('registered_users', JSON.stringify(storedUsers));
+      // Daftarkan ke backend (real API, bukan localStorage)
+      await apiRequest<User>('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
 
       toast.success('Pendaftaran berhasil! Silakan login.');
-      setTimeout(() => navigate('/login'), 1500);
+      navigate('/login');
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : 'Registrasi gagal');
+    } finally {
       setLoading(false);
     }
   };
@@ -74,7 +56,6 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto w-full max-w-[420px] py-12 px-4">
       <Card className="relative overflow-hidden bg-white shadow-xl shadow-slate-200/50 p-8">
-        
         <div className="text-center mb-8">
           <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0f2d5e]/10 text-[#0f2d5e] mb-4">
             <UserPlus size={28} />
@@ -161,7 +142,7 @@ export default function RegisterPage() {
           </div>
 
           <Button type="submit" fullWidth disabled={loading} className="mt-2 text-sm py-3 bg-[#0f2d5e] hover:bg-[#14407f]">
-            {loading ? 'Memproses...' : 'Daftar'}
+            {loading ? 'Mendaftarkan...' : 'Daftar'}
           </Button>
 
           <div className="mt-6 text-center text-sm text-slate-500">

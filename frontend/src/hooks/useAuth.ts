@@ -20,61 +20,20 @@ export function useAuth() {
       throw new Error('Email dan password wajib diisi');
     }
 
-    // Simulasi network request delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    // Panggil API backend
+    const userData = await apiRequest<User>('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-    let nextRole: UserRole | null = null;
-    let nextUser: User | null = null;
-
-    // Hardcoded Dummy Users
-    if (email === 'admin@sportify.com' && password === 'admin1234') {
-      nextRole = 'admin';
-      nextUser = {
-        id: 1,
-        email,
-        name: 'Admin Sportify',
-        role: 'admin',
-        createdAt: new Date().toISOString()
-      };
-    } else if (email === 'user@sportify.com' && password === 'user1234') {
-      nextRole = 'user';
-      nextUser = {
-        id: 2,
-        email,
-        name: 'User Dummy',
-        role: 'user',
-        createdAt: new Date().toISOString()
-      };
-    } else {
-      // Check local storage registered users
-      const storedUsersRaw = localStorage.getItem('registered_users');
-      if (storedUsersRaw) {
-        const storedUsers = JSON.parse(storedUsersRaw);
-        const registeredUser = storedUsers.find((u: any) => u.email === email && u.password === password);
-        
-        if (registeredUser) {
-          nextRole = registeredUser.role as UserRole;
-          nextUser = {
-            id: Date.now(),
-            email,
-            name: registeredUser.name,
-            role: nextRole,
-            createdAt: new Date().toISOString()
-          };
-        }
-      }
-    }
-
-    if (!nextRole || !nextUser) {
-      throw new Error('Email atau password salah');
-    }
-
+    const nextRole = userData.role;
     setRole(nextRole);
-    setUser(nextUser);
+    setUser(userData);
     setStoredRole(nextRole);
-    setStoredUser(nextUser);
+    setStoredUser(userData);
 
-    toast.success(nextRole === 'admin' ? 'Admin mode aktif' : 'User mode aktif');
+    toast.success(nextRole === 'admin' ? 'Selamat datang, Admin!' : `Halo, ${userData.name}!`);
     return nextRole;
   }, []);
 
@@ -82,7 +41,7 @@ export function useAuth() {
     clearAuthStorage();
     setRole(null);
     setUser(null);
-    toast.success('Sampai jumpa lagi, Sobat Sportify');
+    toast.success('Sampai jumpa lagi, Sobat Sportify 👋');
   }, []);
 
   return {
@@ -92,6 +51,6 @@ export function useAuth() {
     setUser,
     login,
     logout,
-    isInitializing
+    isInitializing,
   };
 }

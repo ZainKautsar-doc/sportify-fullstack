@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { addDays, format } from 'date-fns';
 import { MapPin } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Booking, Field, User } from '@/src/types/domain';
+import type { AvailabilitySlot, Booking, Field, User } from '@/src/types/domain';
 import { apiRequest } from '@/src/lib/api';
 import { formatCurrency, formatDateLabel, toImageByFieldType } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
@@ -13,11 +13,9 @@ import Skeleton from '@/src/components/ui/Skeleton';
 import EmptyState from '@/src/components/ui/EmptyState';
 import ErrorState from '@/src/components/ui/ErrorState';
 
-const SLOT_TIMES = Array.from({ length: 7 }, (_, i) => `${(i + 13).toString().padStart(2, '0')}:00`);
 const SLOT_GROUPS = [
-  { label: 'Pagi', slots: [] as string[], hint: 'Belum tersedia, operasional mulai 13:00' },
-  { label: 'Siang', slots: SLOT_TIMES.filter((time) => Number(time.split(':')[0]) < 17), hint: '' },
-  { label: 'Malam', slots: SLOT_TIMES.filter((time) => Number(time.split(':')[0]) >= 17), hint: '' },
+  { label: 'Siang', hoursRange: [13, 17] },
+  { label: 'Malam', hoursRange: [17, 20] },
 ];
 
 interface BookingPageProps {
@@ -28,16 +26,22 @@ export default function BookingPage({ user }: BookingPageProps) {
   const navigate = useNavigate();
   const { fieldId } = useParams();
   const [searchParams] = useSearchParams();
+
   const [fields, setFields] = useState<Field[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSlotLoading, setIsSlotLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(fieldId ? Number(fieldId) : null);
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') ?? format(new Date(), 'yyyy-MM-dd'));
+  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(
+    fieldId ? Number(fieldId) : null
+  );
+  const [selectedDate, setSelectedDate] = useState(
+    searchParams.get('date') ?? format(new Date(), 'yyyy-MM-dd')
+  );
   const [selectedTime, setSelectedTime] = useState(searchParams.get('time') ?? '');
   const [submitting, setSubmitting] = useState(false);
 
+  // Load lapangan dari backend
   const loadFields = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -48,19 +52,22 @@ export default function BookingPage({ user }: BookingPageProps) {
         setSelectedFieldId(data[0].id);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Ups, coba lagi ya';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Gagal memuat lapangan');
     } finally {
       setIsLoading(false);
     }
   }, [selectedFieldId]);
 
-  const loadSlots = useCallback(async () => {
+  // Load slot availability dari /api/availability
+  const loadAvailability = useCallback(async () => {
     if (!selectedFieldId || !selectedDate) return;
     setIsSlotLoading(true);
+    setAvailability([]);
     try {
-      const data = await apiRequest<Booking[]>(`/api/bookings?field_id=${selectedFieldId}&date=${selectedDate}`);
-      setBookings(data);
+      const data = await apiRequest<AvailabilitySlot[]>(
+        `/api/availability?date=${selectedDate}&field_id=${selectedFieldId}`
+      );
+      setAvailability(data);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Gagal memuat slot');
     } finally {
@@ -68,30 +75,17 @@ export default function BookingPage({ user }: BookingPageProps) {
     }
   }, [selectedDate, selectedFieldId]);
 
-  useEffect(() => {
-    void loadFields();
-  }, [loadFields]);
-
-  useEffect(() => {
-    void loadSlots();
-  }, [loadSlots]);
+  useEffect(() => { void loadFields(); }, [loadFields]);
+  useEffect(() => { void loadAvailability(); }, [loadAvailability]);
 
   const selectedField = useMemo(
-    () => fields.find((field) => field.id === selectedFieldId) ?? null,
-    [fields, selectedFieldId],
+    () => fields.find((f) => f.id === selectedFieldId) ?? null,
+    [fields, selectedFieldId]
   );
-
-  const bookedTimes = useMemo(() => {
-    const set = new Set<string>();
-    bookings.forEach((booking) => {
-      if (booking.status !== 'rejected') set.add(booking.start_time);
-    });
-    return set;
-  }, [bookings]);
 
   const quickDates = useMemo(
     () => [new Date(), addDays(new Date(), 1), addDays(new Date(), 2), addDays(new Date(), 3)],
-    [],
+    []
   );
 
   const canSubmit = Boolean(selectedField && selectedDate && selectedTime) && !submitting;
@@ -106,12 +100,11 @@ export default function BookingPage({ user }: BookingPageProps) {
     const endHour = Number(selectedTime.split(':')[0]) + 1;
 
     try {
-      const result = await apiRequest<{ id: number }>('/api/bookings', {
+      const result = await apiRequest<Booking>('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user.id,
-          user_email: user.email,
           field_id: selectedField.id,
           booking_date: selectedDate,
           start_time: selectedTime,
@@ -119,7 +112,7 @@ export default function BookingPage({ user }: BookingPageProps) {
         }),
       });
 
-      toast.success('Booking berhasil dibuat. Lanjut upload pembayaran, ya');
+      toast.success(`Booking berhasil! Total: ${formatCurrency(result.total_price)}. Lanjut Upload Pembayaran.`);
       navigate(`/payment/${result.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Ups, coba lagi ya');
@@ -161,6 +154,7 @@ export default function BookingPage({ user }: BookingPageProps) {
   return (
     <div className="grid grid-cols-1 gap-6 pb-16 lg:grid-cols-[1.5fr_0.8fr]">
       <section className="space-y-6">
+        {/* Step 1: Pilih Lapangan */}
         <Card className="space-y-4">
           <div>
             <p className="text-sm font-semibold text-indigo-600">Step 1</p>
@@ -174,10 +168,7 @@ export default function BookingPage({ user }: BookingPageProps) {
                 <button
                   type="button"
                   key={field.id}
-                  onClick={() => {
-                    setSelectedFieldId(field.id);
-                    setSelectedTime('');
-                  }}
+                  onClick={() => { setSelectedFieldId(field.id); setSelectedTime(''); }}
                   className={`overflow-hidden rounded-2xl border text-left transition ${
                     active
                       ? 'border-indigo-500 bg-indigo-50/70 shadow-[0_16px_35px_-28px_rgba(79,70,229,0.8)]'
@@ -193,7 +184,7 @@ export default function BookingPage({ user }: BookingPageProps) {
                     </p>
                     <div className="flex items-center justify-between">
                       <Badge variant="primary">{field.type}</Badge>
-                      <span className="text-sm font-semibold text-slate-700">{formatCurrency(field.price_per_hour)}</span>
+                      <span className="text-sm font-semibold text-slate-700">{formatCurrency(field.price_per_hour)}/jam</span>
                     </div>
                   </div>
                 </button>
@@ -202,6 +193,7 @@ export default function BookingPage({ user }: BookingPageProps) {
           </div>
         </Card>
 
+        {/* Step 2: Pilih Tanggal */}
         <Card className="space-y-4">
           <div>
             <p className="text-sm font-semibold text-indigo-600">Step 2</p>
@@ -215,10 +207,7 @@ export default function BookingPage({ user }: BookingPageProps) {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => {
-                    setSelectedDate(value);
-                    setSelectedTime('');
-                  }}
+                  onClick={() => { setSelectedDate(value); setSelectedTime(''); }}
                   className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
                     active ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300'
                   }`}
@@ -232,15 +221,13 @@ export default function BookingPage({ user }: BookingPageProps) {
             type="date"
             min={format(new Date(), 'yyyy-MM-dd')}
             value={selectedDate}
-            onChange={(event) => {
-              setSelectedDate(event.target.value);
-              setSelectedTime('');
-            }}
+            onChange={(event) => { setSelectedDate(event.target.value); setSelectedTime(''); }}
             className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
           />
           <p className="text-sm text-slate-500">{formatDateLabel(selectedDate)}</p>
         </Card>
 
+        {/* Step 3: Pilih Slot */}
         <Card className="space-y-4">
           <div>
             <p className="text-sm font-semibold text-indigo-600">Step 3</p>
@@ -248,52 +235,54 @@ export default function BookingPage({ user }: BookingPageProps) {
           </div>
 
           <div className="space-y-4">
-            {SLOT_GROUPS.map((group) => (
-              <div key={group.label} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-700">{group.label}</p>
-                  {group.hint ? <p className="text-xs text-slate-500">{group.hint}</p> : null}
-                </div>
+            {SLOT_GROUPS.map((group) => {
+              const groupSlots = availability.filter((slot) => {
+                const h = parseInt(slot.time.split(':')[0], 10);
+                return h >= group.hoursRange[0] && h < group.hoursRange[1];
+              });
 
-                {isSlotLoading ? (
-                  <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
-                    {Array.from({ length: group.label === 'Pagi' ? 2 : group.slots.length || 3 }).map((_, index) => (
-                      <div key={`${group.label}-${index}`}>
-                        <Skeleton className="h-10 w-full rounded-xl" />
-                      </div>
-                    ))}
-                  </div>
-                ) : group.slots.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                    Slot pagi belum buka. Kamu bisa pilih mulai jam 13:00.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
-                    {group.slots.map((time) => {
-                      const isBooked = bookedTimes.has(time);
-                      const isSelected = selectedTime === time;
-                      return (
-                        <button
-                          type="button"
-                          key={time}
-                          onClick={() => setSelectedTime(time)}
-                          disabled={isBooked}
-                          className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                            isBooked
-                              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
-                              : isSelected
-                                ? 'border-indigo-700 bg-indigo-700 text-white shadow-[0_14px_26px_-16px_rgba(55,48,163,0.9)]'
-                                : 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:border-indigo-300'
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
+              return (
+                <div key={group.label} className="space-y-2">
+                  <p className="text-sm font-semibold text-slate-700">{group.label}</p>
+
+                  {isSlotLoading ? (
+                    <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 w-full rounded-xl" />
+                      ))}
+                    </div>
+                  ) : groupSlots.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                      Tidak ada slot tersedia untuk sesi ini.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
+                      {groupSlots.map((slot) => {
+                        const isBooked = !slot.available;
+                        const isSelected = selectedTime === slot.time;
+                        return (
+                          <button
+                            type="button"
+                            key={slot.time}
+                            onClick={() => setSelectedTime(slot.time)}
+                            disabled={isBooked}
+                            className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                              isBooked
+                                ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
+                                : isSelected
+                                  ? 'border-indigo-700 bg-indigo-700 text-white shadow-[0_14px_26px_-16px_rgba(55,48,163,0.9)]'
+                                  : 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:border-indigo-300'
+                            }`}
+                          >
+                            {slot.time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
@@ -316,13 +305,19 @@ export default function BookingPage({ user }: BookingPageProps) {
         </Card>
       </section>
 
+      {/* Sidebar: Ringkasan Booking */}
       <aside className="lg:sticky lg:top-24 lg:h-fit">
         <Card className="space-y-4">
           <h2 className="font-display text-xl font-bold text-slate-900">Ringkasan Booking</h2>
           <SummaryItem label="Lapangan" value={selectedField?.name ?? '-'} />
           <SummaryItem label="Tanggal" value={selectedDate ? formatDateLabel(selectedDate) : '-'} />
-          <SummaryItem label="Jam" value={selectedTime || '-'} />
-          <SummaryItem label="Total harga" value={selectedField ? formatCurrency(selectedField.price_per_hour) : '-'} highlight />
+          <SummaryItem label="Jam mulai" value={selectedTime || '-'} />
+          <SummaryItem label="Jam selesai" value={selectedTime ? `${String(Number(selectedTime.split(':')[0]) + 1).padStart(2, '0')}:00` : '-'} />
+          <SummaryItem
+            label="Total harga"
+            value={selectedField ? formatCurrency(selectedField.price_per_hour) : '-'}
+            highlight
+          />
 
           <Button fullWidth onClick={handleSubmit} disabled={!canSubmit}>
             {submitting ? 'Menyimpan booking...' : 'Gas Booking! 🚀'}

@@ -4,14 +4,12 @@ export interface User {
   id: number;
   role: UserRole;
   name: string;
-  email?: string;
-  phone?: string;
+  email: string;
   createdAt?: string;
 }
 
 export interface Field {
   id: number;
-  venue_id: number;
   name: string;
   type: string;
   price_per_hour: number;
@@ -27,7 +25,9 @@ export interface Booking {
   start_time: string;
   end_time: string;
   status: BookingStatus;
+  total_price: number;
   created_at: string;
+  // JOINed fields
   field_name: string;
   field_type: string;
   price_per_hour: number;
@@ -47,4 +47,9 @@ export interface AdminStats {
   totalBookings: number;
   pendingBookings: number;
   revenue: number;
+}
+
+export interface AvailabilitySlot {
+  time: string;      // "13:00", "14:00", ...
+  available: boolean;
 }

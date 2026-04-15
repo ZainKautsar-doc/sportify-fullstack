@@ -7,18 +7,18 @@ import fieldRoutes from './routes/fields.routes';
 import bookingRoutes from './routes/bookings.routes';
 import paymentRoutes from './routes/payments.routes';
 import adminRoutes from './routes/admin.routes';
+import availabilityRoutes from './routes/availability.routes';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send("API Running...");
+app.get('/', (req, res) => {
+  res.send('Sportify API Running...');
 });
 
-
-// Setup static file serving for uploads
+// Static files for uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Routes
@@ -27,5 +27,6 @@ app.use('/api/fields', fieldRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/availability', availabilityRoutes);
 
 export default app;

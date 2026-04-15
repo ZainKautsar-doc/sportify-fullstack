@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Lock, Sparkles, LogIn } from 'lucide-react';
+import { Mail, Lock, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
@@ -20,7 +20,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       setErrorMsg('Email dan password wajib diisi');
       return;
     }
-    
+
     setLoading(true);
     setErrorMsg('');
     try {
@@ -34,7 +34,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   return (
     <div className="mx-auto w-full max-w-[420px] py-12 px-4">
       <Card className="relative overflow-hidden bg-white shadow-xl shadow-slate-200/50 p-8">
-        
         <div className="text-center mb-8">
           <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0f2d5e]/10 text-[#0f2d5e] mb-4">
             <LogIn size={28} />
@@ -89,16 +88,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <Button type="submit" fullWidth disabled={loading} className="mt-2 text-sm py-3 bg-[#0f2d5e] hover:bg-[#14407f]">
             {loading ? 'Memproses...' : 'Masuk'}
           </Button>
-          
-          <div className="mt-6 text-center text-xs text-slate-500 space-y-2 bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <p className="font-semibold text-slate-700 flex items-center justify-center gap-1.5">
-              <Sparkles size={14} className="text-indigo-500" /> Dummy Credentials
-            </p>
-            <div className="flex flex-col gap-1 text-left sm:text-center text-[11px]">
-              <p>Admin: admin@sportify.com / admin1234</p>
-              <p>User: user@sportify.com / user1234</p>
-            </div>
-          </div>
 
           <div className="mt-6 text-center text-sm text-slate-500">
             Belum punya akun?{' '}

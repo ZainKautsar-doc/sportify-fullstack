@@ -35,6 +35,7 @@ export function buildDummyBookingsForMonth(currentMonth: Date): Booking[] {
       start_time: time.start,
       end_time: time.end,
       status: item.status,
+      total_price: item.price,
       created_at: `${bookedDate}T08:00:00.000Z`,
       field_name: item.field,
       field_type: item.type,

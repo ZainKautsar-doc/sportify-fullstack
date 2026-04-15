@@ -36,13 +36,13 @@ export const getAdminPayments = async (req: Request, res: Response): Promise<any
         b.start_time,
         b.end_time,
         p.status,
-        p.payment_proof AS payment_proof,
+        p.payment_proof,
         u.name AS user_name
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
       JOIN fields f ON b.field_id = f.id
       JOIN users u ON b.user_id = u.id
-      ORDER BY p.created_at DESC
+      ORDER BY p.id DESC
     `);
 
     // Format response to match required output

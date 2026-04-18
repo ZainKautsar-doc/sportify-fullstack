@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, ImagePlus, Info, LoaderCircle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Booking, User } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import { formatCurrency, formatDateLabel } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
@@ -32,7 +32,7 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const bookings = await apiRequest<Booking[]>(`/api/bookings?user_id=${user.id}`);
+      const bookings = await fetchWithAuth<Booking[]>('/api/bookings');
       const target = bookings.find((item) => item.id === Number(bookingId));
       if (!target) throw new Error('Booking tidak ditemukan');
       setBooking(target);
@@ -78,7 +78,7 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
       // Gunakan field name 'file' sesuai backend (upload.single('file'))
       formData.append('file', file);
 
-      await apiRequest('/api/payments/upload', {
+      await fetchWithAuth('/api/payments/upload', {
         method: 'POST',
         body: formData,
         // Jangan set Content-Type — biarkan browser set boundary otomatis

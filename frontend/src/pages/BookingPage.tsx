@@ -4,7 +4,7 @@ import { addDays, format } from 'date-fns';
 import { MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AvailabilitySlot, Booking, Field, User } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import { formatCurrency, formatDateLabel, toImageByFieldType } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
@@ -46,7 +46,7 @@ export default function BookingPage({ user }: BookingPageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiRequest<Field[]>('/api/fields');
+      const data = await fetchWithAuth<Field[]>('/api/fields');
       setFields(data);
       if (!selectedFieldId && data.length > 0) {
         setSelectedFieldId(data[0].id);
@@ -64,7 +64,7 @@ export default function BookingPage({ user }: BookingPageProps) {
     setIsSlotLoading(true);
     setAvailability([]);
     try {
-      const data = await apiRequest<AvailabilitySlot[]>(
+      const data = await fetchWithAuth<AvailabilitySlot[]>(
         `/api/availability?date=${selectedDate}&field_id=${selectedFieldId}`
       );
       setAvailability(data);
@@ -100,11 +100,10 @@ export default function BookingPage({ user }: BookingPageProps) {
     const endHour = Number(selectedTime.split(':')[0]) + 1;
 
     try {
-      const result = await apiRequest<Booking>('/api/bookings', {
+      const result = await fetchWithAuth<Booking>('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: user.id,
           field_id: selectedField.id,
           booking_date: selectedDate,
           start_time: selectedTime,

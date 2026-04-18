@@ -14,6 +14,8 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
     `;
     const params: any[] = [];
     let paramIndex = 1;
+    const user = (req as any).user;
+    const { date, field_id, user_id } = req.query;
 
     if (date) {
       query += ` AND b.booking_date = $${paramIndex++}`;
@@ -23,9 +25,17 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
       query += ` AND b.field_id = $${paramIndex++}`;
       params.push(field_id);
     }
-    if (user_id) {
+
+    // Force user filtration if not admin, or use provided user_id if admin
+    if (user.role === 'admin') {
+      if (user_id) {
+        query += ` AND b.user_id = $${paramIndex++}`;
+        params.push(user_id);
+      }
+    } else {
+      // For normal users, ALWAYS filter by their own ID
       query += ` AND b.user_id = $${paramIndex++}`;
-      params.push(user_id);
+      params.push(user.id);
     }
 
     query += ' ORDER BY b.booking_date DESC, b.start_time DESC';

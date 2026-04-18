@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Edit3, LogOut, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Booking, User } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import { formatDateLabel } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
@@ -25,7 +25,7 @@ export default function UserProfilePage({ user, onLogout }: UserProfilePageProps
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiRequest<Booking[]>(`/api/bookings?user_id=${user.id}`);
+      const data = await fetchWithAuth<Booking[]>('/api/bookings');
       setBookings(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ups, coba lagi ya');

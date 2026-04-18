@@ -3,6 +3,7 @@ import type { User, UserRole } from '@/src/types/domain';
 const STORAGE_KEYS = {
   role: 'sportify_role',
   user: 'sportify_user',
+  token: 'sportify_token',
 } as const;
 
 export function getStoredRole(): UserRole | null {
@@ -16,6 +17,18 @@ export function setStoredRole(role: UserRole) {
 
 export function clearStoredRole() {
   localStorage.removeItem(STORAGE_KEYS.role);
+}
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(STORAGE_KEYS.token);
+}
+
+export function setStoredToken(token: string) {
+  localStorage.setItem(STORAGE_KEYS.token, token);
+}
+
+export function clearStoredToken() {
+  localStorage.removeItem(STORAGE_KEYS.token);
 }
 
 export function getStoredUser(): User | null {
@@ -49,4 +62,5 @@ export function clearStoredUser() {
 export function clearAuthStorage() {
   clearStoredRole();
   clearStoredUser();
+  clearStoredToken();
 }

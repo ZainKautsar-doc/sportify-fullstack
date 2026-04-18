@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Goal, Medal, Volleyball, Dumbbell } from "lucide-react";
 import type { Booking, Field, UserRole } from "@/src/types/domain";
-import { apiRequest } from "@/src/lib/api";
+import { fetchWithAuth } from "@/src/lib/api";
 import { Card } from "@/src/components/ui/Card";
 import Skeleton from "@/src/components/ui/Skeleton";
 import ErrorState from "@/src/components/ui/ErrorState";
@@ -53,9 +53,11 @@ export default function HomePage({ role }: HomePageProps) {
     setError(null);
     try {
       const today = format(new Date(), "yyyy-MM-dd");
+      // availability info can be fetched via fetchWithAuth, 
+      // but we wrap in try-catch to not crash if guest
       const [fieldsData, bookingData] = await Promise.all([
-        apiRequest<Field[]>("/api/fields"),
-        apiRequest<Booking[]>(`/api/bookings?date=${today}`),
+        fetchWithAuth<Field[]>("/api/fields"),
+        fetchWithAuth<Booking[]>(`/api/bookings?date=${today}`).catch(() => [] as Booking[]),
       ]);
       setFields(fieldsData);
       setTodayBookings(bookingData);

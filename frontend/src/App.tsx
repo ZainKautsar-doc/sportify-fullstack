@@ -78,76 +78,53 @@ function AppContent({
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/lapangan/:fieldId" element={role === 'admin' ? <Navigate to="/admin" replace /> : <FieldDetailPage role={role} />} />
+          
           <Route
             path="/booking"
             element={
-              role === 'admin' ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <RequireRole currentRole={role} allowedRole="user">
-                  {user ? <BookingPage user={user} /> : <Navigate to="/login?next=%2Fbooking" replace />}
-                </RequireRole>
-              )
+              <RequireRole currentRole={role} allowedRole="user">
+                <BookingPage user={user!} />
+              </RequireRole>
             }
           />
           <Route
             path="/booking/:fieldId"
             element={
-              role === 'admin' ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <RequireRole currentRole={role} allowedRole="user">
-                  {user ? <BookingPage user={user} /> : <Navigate to="/login?next=%2Fbooking" replace />}
-                </RequireRole>
-              )
+              <RequireRole currentRole={role} allowedRole="user">
+                <BookingPage user={user!} />
+              </RequireRole>
             }
           />
           <Route
             path="/payment/:bookingId"
             element={
-              role === 'admin' ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <RequireRole currentRole={role} allowedRole="user">
-                  {user ? <PaymentUploadPage user={user} /> : <Navigate to="/login?next=%2Fbooking" replace />}
-                </RequireRole>
-              )
+              <RequireRole currentRole={role} allowedRole="user">
+                <PaymentUploadPage user={user!} />
+              </RequireRole>
             }
           />
           <Route
             path="/jadwal"
             element={
-              role === 'admin' ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <RequireRole currentRole={role} allowedRole="user">
-                  {user ? <UserSchedulePage user={user} /> : <Navigate to="/login?next=%2Fbooking" replace />}
-                </RequireRole>
-              )
+              <RequireRole currentRole={role} allowedRole="user">
+                <UserSchedulePage user={user!} />
+              </RequireRole>
             }
           />
           <Route
             path="/profil"
             element={
-              role === 'admin' ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <RequireRole currentRole={role} allowedRole="user">
-                  {user ? <UserProfilePage user={user} onLogout={onLogout} /> : <Navigate to="/login?next=%2Fbooking" replace />}
-                </RequireRole>
-              )
+              <RequireRole currentRole={role} allowedRole="user">
+                <UserProfilePage user={user!} onLogout={onLogout} />
+              </RequireRole>
             }
           />
           <Route
             path="/admin"
             element={
-              role === 'user' ? (
-                <Navigate to="/" replace />
-              ) : (
-                <RequireRole currentRole={role} allowedRole="admin">
-                  <AdminDashboard />
-                </RequireRole>
-              )
+              <RequireRole currentRole={role} allowedRole="admin">
+                <AdminDashboard />
+              </RequireRole>
             }
           />
           <Route path="/kontak" element={<ContactPage />} />

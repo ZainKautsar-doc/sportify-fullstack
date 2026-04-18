@@ -4,7 +4,7 @@ import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import type { User } from '@/src/types/domain';
 
 export default function RegisterPage() {
@@ -38,7 +38,7 @@ export default function RegisterPage() {
 
     try {
       // Daftarkan ke backend (real API, bukan localStorage)
-      await apiRequest<User>('/api/auth/register', {
+      await fetchWithAuth<User>('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

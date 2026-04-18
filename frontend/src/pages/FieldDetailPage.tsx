@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { MapPin, Star } from 'lucide-react';
 import type { Booking, Field, UserRole } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import { getVenueDetailContent } from '@/src/lib/fieldDetailData';
 import { Card } from '@/src/components/ui/Card';
 import Badge from '@/src/components/ui/Badge';
@@ -35,8 +35,8 @@ export default function FieldDetailPage({ role }: FieldDetailPageProps) {
     setError(null);
     try {
       const [fields, dayBookings] = await Promise.all([
-        apiRequest<Field[]>('/api/fields'),
-        apiRequest<Booking[]>(`/api/bookings?field_id=${fieldId}&date=${date}`),
+        fetchWithAuth<Field[]>('/api/fields'),
+        fetchWithAuth<Booking[]>(`/api/bookings?field_id=${fieldId}&date=${date}`),
       ]);
 
       const target = fields.find((item) => item.id === Number(fieldId)) ?? null;

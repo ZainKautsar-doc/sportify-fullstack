@@ -22,6 +22,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
 
     // inject user ke request
     (req as any).user = decoded;
+    console.log('[AuthMiddleware] req.user:', (req as any).user);
 
     next();
 };

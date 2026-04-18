@@ -4,7 +4,7 @@ import { format, subDays } from 'date-fns';
 import { CheckCircle2, Clock3, Eye, Plus, TrendingUp, Wallet, XCircle, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AdminStats, Booking, Field, AdminPayment } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import { formatCurrency } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
 import Badge from '@/src/components/ui/Badge';
@@ -50,10 +50,10 @@ export default function AdminDashboard() {
     setError(null);
     try {
       const [statsData, bookingsData, fieldsData, paymentsData] = await Promise.all([
-        apiRequest<AdminStats>('/api/admin/stats'),
-        apiRequest<Booking[]>('/api/bookings'),
-        apiRequest<Field[]>('/api/fields'),
-        apiRequest<AdminPayment[]>('/api/admin/payments'),
+        fetchWithAuth<AdminStats>('/api/admin/stats'),
+        fetchWithAuth<Booking[]>('/api/bookings'),
+        fetchWithAuth<Field[]>('/api/fields'),
+        fetchWithAuth<AdminPayment[]>('/api/admin/payments'),
       ]);
       setStats(statsData);
       setBookings(bookingsData);
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
   // Fallback for direct booking status update
   const updateStatus = async (bookingId: number, status: Booking['status']) => {
     try {
-      await apiRequest(`/api/bookings/${bookingId}/status`, {
+      await fetchWithAuth(`/api/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
 
   const approvePayment = async (paymentId: number) => {
     try {
-      await apiRequest(`/api/admin/payments/${paymentId}/approve`, { method: 'PUT' });
+      await fetchWithAuth(`/api/admin/approve/${paymentId}`, { method: 'PUT' });
       toast.success('Pembayaran disetujui, booking dikonfirmasi 🎉');
       await fetchAllData();
     } catch (err) {
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
   const rejectPayment = async (paymentId: number) => {
     if (!window.confirm('Yakin menolak pembayaran ini? Booking juga akan di-reject.')) return;
     try {
-      await apiRequest(`/api/admin/payments/${paymentId}/reject`, { method: 'PUT' });
+      await fetchWithAuth(`/api/admin/reject/${paymentId}`, { method: 'PUT' });
       toast.success('Pembayaran ditolak.');
       await fetchAllData();
     } catch (err) {
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
 
     setSubmittingField(true);
     try {
-      await apiRequest('/api/fields', {
+      await fetchWithAuth('/api/fields', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
   const deleteField = async (fieldId: number) => {
     if (!window.confirm('Yakin mau hapus lapangan ini?')) return;
     try {
-      await apiRequest(`/api/fields/${fieldId}`, { method: 'DELETE' });
+      await fetchWithAuth(`/api/fields/${fieldId}`, { method: 'DELETE' });
       toast.success('Lapangan dihapus');
       await fetchAllData();
     } catch (err) {

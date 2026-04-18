@@ -21,16 +21,22 @@ export const uploadPayment = async (req: Request, res: Response): Promise<any> =
   const paymentProof = `/uploads/${file.filename}`;
 
   try {
-    // Cek booking valid
-    const bookingCheck = await pool.query(
-      'SELECT id, total_price, status FROM bookings WHERE id = $1',
-      [bookingId]
-    );
+    const user = (req as any).user;
+    // Cek booking valid dan milik user (jika bukan admin)
+    let query = 'SELECT id, total_price, status, user_id FROM bookings WHERE id = $1';
+    const params = [bookingId];
+
+    const bookingCheck = await pool.query(query, params);
     if (bookingCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Booking tidak ditemukan' });
     }
 
     const booking = bookingCheck.rows[0];
+
+    // Check ownership
+    if (user.role !== 'admin' && booking.user_id !== user.id) {
+       return res.status(403).json({ error: 'Bukan booking milik Anda' });
+    }
     if (booking.status === 'confirmed' || booking.status === 'completed') {
       return res.status(400).json({ error: 'Booking sudah dikonfirmasi, tidak bisa upload ulang' });
     }
@@ -82,7 +88,19 @@ export const uploadPayment = async (req: Request, res: Response): Promise<any> =
 // GET /api/payments/:booking_id
 export const getPayment = async (req: Request, res: Response): Promise<any> => {
   const { booking_id } = req.params;
+  const user = (req as any).user;
+
   try {
+    // 1. Check booking ownership
+    const bookingRes = await pool.query('SELECT user_id FROM bookings WHERE id = $1', [booking_id]);
+    if (bookingRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking tidak ditemukan' });
+    }
+
+    if (user.role !== 'admin' && bookingRes.rows[0].user_id !== user.id) {
+      return res.status(403).json({ error: 'Bukan booking milik Anda' });
+    }
+
     const { rows } = await pool.query(
       'SELECT * FROM payments WHERE booking_id = $1 ORDER BY created_at DESC LIMIT 1',
       [booking_id]

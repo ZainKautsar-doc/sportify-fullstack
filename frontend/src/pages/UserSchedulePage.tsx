@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CalendarDays, CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Booking, Payment, User } from '@/src/types/domain';
-import { apiRequest } from '@/src/lib/api';
+import { fetchWithAuth } from '@/src/lib/api';
 import { formatDateLabel } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
 import Badge from '@/src/components/ui/Badge';
@@ -30,14 +30,14 @@ export default function UserSchedulePage({ user }: UserSchedulePageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiRequest<Booking[]>(`/api/bookings?user_id=${user.id}`);
+      const data = await fetchWithAuth<Booking[]>('/api/bookings');
       setBookings(data);
 
       const pendingBookings = data.filter((booking) => booking.status === 'pending');
       const paymentPairs = await Promise.all(
         pendingBookings.map(async (booking) => {
           try {
-            const payment = await apiRequest<Payment>(`/api/payments/${booking.id}`);
+            const payment = await fetchWithAuth<Payment>(`/api/payments/${booking.id}`);
             return [booking.id, payment] as const;
           } catch {
             return [booking.id, null] as const;
@@ -67,7 +67,7 @@ export default function UserSchedulePage({ user }: UserSchedulePageProps) {
   const cancelBooking = async (bookingId: number) => {
     if (!window.confirm('Yakin mau batalin booking ini?')) return;
     try {
-      await apiRequest(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+      await fetchWithAuth(`/api/bookings/${bookingId}`, { method: 'DELETE' });
       toast.success('Booking berhasil dibatalkan');
       await loadBookings();
     } catch (err) {

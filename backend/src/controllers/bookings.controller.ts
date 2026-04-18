@@ -30,7 +30,7 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
 
     query += ' ORDER BY b.booking_date DESC, b.start_time DESC';
     const { rows } = await pool.query(query, params);
-    
+
     // Explicitly return JSON array
     res.status(200).json(rows);
   } catch (error: any) {
@@ -48,21 +48,21 @@ export const getBookingSummary = async (req: Request, res: Response): Promise<an
       WHERE status != 'rejected'
     `;
     const params: any[] = [];
-    
+
     if (month && typeof month === 'string') {
       query += ` AND TO_CHAR(booking_date, 'YYYY-MM') = $1`;
       params.push(month);
     }
-    
+
     query += ` GROUP BY booking_date ORDER BY booking_date ASC`;
     const { rows } = await pool.query(query, params);
-    
+
     // Parse total to integer since COUNT returns string in pg
     const formatted = rows.map((r: any) => ({
       booking_date: r.booking_date,
       total: parseInt(r.total, 10)
     }));
-    
+
     res.status(200).json(formatted);
   } catch (error: any) {
     console.error('Error in getBookingSummary:', error);
@@ -71,13 +71,13 @@ export const getBookingSummary = async (req: Request, res: Response): Promise<an
 };
 
 export const createBooking = async (req: Request, res: Response): Promise<any> => {
-  const { user_id, field_id, booking_date, start_time, end_time } = req.body;
+  const { field_id, booking_date, start_time, end_time } = req.body;
 
   // Basic Validation
-  const userId = Number(user_id);
+  const user = (req as any).user;
+  const userId = user.id;
   const fieldId = Number(field_id);
-  
-  if (!Number.isInteger(userId) || userId <= 0) return res.status(400).json({ error: 'user_id wajib berupa angka valid' });
+
   if (!Number.isInteger(fieldId) || fieldId <= 0) return res.status(400).json({ error: 'field_id wajib berupa angka valid' });
   if (typeof booking_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(booking_date)) return res.status(400).json({ error: 'booking_date wajib berformat yyyy-mm-dd' });
   if (typeof start_time !== 'string' || !/^\d{2}:\d{2}$/.test(start_time)) return res.status(400).json({ error: 'start_time wajib berformat HH:mm' });
@@ -123,14 +123,14 @@ export const createBooking = async (req: Request, res: Response): Promise<any> =
     );
 
     await client.query('COMMIT');
-    
+
     // Return complete booking document back to frontend
     res.status(201).json(insertRes.rows[0]);
   } catch (error: any) {
     await client.query('ROLLBACK');
     console.error('Error in createBooking:', error);
 
-    if (error.code === '23505') { 
+    if (error.code === '23505') {
       res.status(409).json({ error: 'Jadwal bentrok. Slot waktu tersebut sudah di-booking.' });
     } else {
       res.status(500).json({ error: 'Internal server error: ' + (error.message || 'Unknown Error') });

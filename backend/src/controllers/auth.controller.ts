@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { pool } from '../lib/db';
+import { generateToken } from '../utils/jwt';
 
 const SALT_ROUNDS = 10;
 
@@ -83,14 +84,26 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       return res.status(401).json({ error: 'Email atau password salah' });
     }
 
-    // Return user tanpa password
-    res.status(200).json({
+    // ✅ GENERATE TOKEN (INI YANG KURANG)
+    const token = generateToken({
       id: user.id,
-      name: user.name,
       email: user.email,
-      role: user.role,
-      createdAt: user.created_at,
+      role: user.role
     });
+
+    // Return user + token
+    res.status(200).json({
+      message: 'Login berhasil',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.created_at,
+      }
+    });
+
   } catch (error: any) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error: ' + (error.message || 'Unknown error') });

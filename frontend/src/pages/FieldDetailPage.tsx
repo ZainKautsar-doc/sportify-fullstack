@@ -36,7 +36,7 @@ export default function FieldDetailPage({ role }: FieldDetailPageProps) {
     try {
       const [fields, dayBookings] = await Promise.all([
         fetchWithAuth<Field[]>('/api/fields'),
-        fetchWithAuth<Booking[]>(`/api/bookings?field_id=${fieldId}&date=${date}`),
+        fetchWithAuth<Booking[]>(`/api/bookings?field_id=${fieldId}&date=${date}`).catch(() => [] as Booking[]),
       ]);
 
       const target = fields.find((item) => item.id === Number(fieldId)) ?? null;
@@ -79,11 +79,7 @@ export default function FieldDetailPage({ role }: FieldDetailPageProps) {
   const onCheckAvailability = () => {
     if (!field) return;
     const target = `/booking/${field.id}?date=${encodeURIComponent(date)}`;
-    if (role === 'user') {
-      navigate(target);
-      return;
-    }
-    navigate(`/login?next=${encodeURIComponent(target)}`);
+    navigate(target);
   };
 
   if (isLoading) {

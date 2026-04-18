@@ -19,7 +19,7 @@ const SLOT_GROUPS = [
 ];
 
 interface BookingPageProps {
-  user: User;
+  user: User | null;
 }
 
 export default function BookingPage({ user }: BookingPageProps) {
@@ -91,6 +91,12 @@ export default function BookingPage({ user }: BookingPageProps) {
   const canSubmit = Boolean(selectedField && selectedDate && selectedTime) && !submitting;
 
   const handleSubmit = async () => {
+    if (!user) {
+      toast.error('Silakan login terlebih dahulu untuk melakukan booking');
+      navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
+      return;
+    }
+
     if (!selectedField || !selectedTime) {
       toast.error('Lengkapi tanggal dan jam dulu ya');
       return;
@@ -263,7 +269,14 @@ export default function BookingPage({ user }: BookingPageProps) {
                           <button
                             type="button"
                             key={slot.time}
-                            onClick={() => setSelectedTime(slot.time)}
+                            onClick={() => {
+                              if (!user) {
+                                toast.error('Silakan login terlebih dahulu untuk melakukan booking');
+                                navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
+                                return;
+                              }
+                              setSelectedTime(slot.time);
+                            }}
                             disabled={isBooked}
                             className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                               isBooked

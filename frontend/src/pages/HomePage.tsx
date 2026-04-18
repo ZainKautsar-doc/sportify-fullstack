@@ -34,8 +34,7 @@ export default function HomePage({ role }: HomePageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const bookingBaseHref =
-    role === "user" ? "/booking" : "/login?next=%2Fbooking";
+  const bookingBaseHref = "/booking";
 
   const scrollToExplore = useCallback(() => {
     document
@@ -43,10 +42,14 @@ export default function HomePage({ role }: HomePageProps) {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const handleBooking = useCallback(
-    () => navigate(bookingBaseHref),
-    [bookingBaseHref, navigate],
-  );
+  const handleBooking = useCallback(() => {
+    if (!role) {
+      toast.error("Silakan login terlebih dahulu untuk melakukan booking");
+      navigate("/login?next=%2Fbooking");
+    } else {
+      navigate(bookingBaseHref);
+    }
+  }, [role, bookingBaseHref, navigate]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -169,10 +172,7 @@ export default function HomePage({ role }: HomePageProps) {
               {fields.map((field) => {
                 const bookedCount = availabilityMap.get(field.id) ?? 0;
                 const status = bookedCount >= 7 ? "full" : "available";
-                const bookingHref =
-                  role === "user"
-                    ? `/booking/${field.id}`
-                    : `/login?next=${encodeURIComponent(`/booking/${field.id}`)}`;
+                const bookingHref = `/booking/${field.id}`;
                 return (
                   <div key={field.id}>
                     <FieldCard

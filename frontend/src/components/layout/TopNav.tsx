@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CalendarClock, LayoutDashboard, House, Shield, Phone, Menu, X, UserCircle2, LogOut, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 import type { UserRole } from '@/src/types/domain';
 import SportifyLogo from '@/src/components/ui/SportifyLogo';
 
@@ -30,8 +31,8 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const bookingHref   = role === 'user' ? '/booking'  : '/login?next=%2Fbooking';
-  const scheduleHref  = role === 'user' ? '/jadwal'   : '/login?next=%2Fjadwal';
+  const bookingHref   = '/booking';
+  const scheduleHref  = '/jadwal';
   const userInitial   = userName ? userName.slice(0, 1).toUpperCase() : 'S';
 
   useEffect(() => {
@@ -100,7 +101,13 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
                 <Link to="/"           className={linkCls(location.pathname === '/')}>
                   <House size={15} /> Beranda
                 </Link>
-                <Link to={bookingHref} className={linkCls(location.pathname.startsWith('/booking'))}>
+                <Link to={bookingHref} onClick={(e) => {
+                  if (!role) {
+                    e.preventDefault();
+                    toast.error('Silakan login terlebih dahulu untuk melakukan booking');
+                    navigate('/login?next=%2Fbooking');
+                  }
+                }} className={linkCls(location.pathname.startsWith('/booking'))}>
                   <CalendarClock size={15} /> Booking
                 </Link>
                 {role === 'user' && (
@@ -160,7 +167,9 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
                   </div>
                 )}
                 {role !== 'admin' && (
-                  <button onClick={() => navigate(bookingHref)} className={primaryBtn}>
+                  <button onClick={() => {
+                    navigate(bookingHref);
+                  }} className={primaryBtn}>
                     Booking Sekarang
                   </button>
                 )}
@@ -195,13 +204,20 @@ export default function TopNav({ role, userName, onLogout }: TopNavProps) {
           <nav className="px-4 py-4 space-y-1">
             {[
               { to: '/', label: 'Beranda', icon: <House size={17} /> },
-              { to: bookingHref, label: 'Booking', icon: <CalendarClock size={17} /> },
+              { to: bookingHref, label: 'Booking', icon: <CalendarClock size={17} />, requiresAuth: true },
               ...(role === 'user' ? [{ to: scheduleHref, label: 'Jadwal Saya', icon: <LayoutDashboard size={17} /> }] : []),
               { to: '/kontak', label: 'Kontak', icon: <Phone size={17} /> },
-            ].map(({ to, label, icon }) => (
+            ].map(({ to, label, icon, requiresAuth }) => (
               <Link
                 key={label}
                 to={to}
+                onClick={(e) => {
+                  if (requiresAuth && !role) {
+                    e.preventDefault();
+                    toast.error('Silakan login terlebih dahulu untuk melakukan booking');
+                    navigate(`/login?next=${encodeURIComponent(to)}`);
+                  }
+                }}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-700 font-semibold hover:bg-[#f0f5fb] hover:text-[#0f2d5e] transition-colors"
               >
                 <span className="text-[#0f2d5e]">{icon}</span>

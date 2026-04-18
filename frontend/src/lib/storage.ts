@@ -23,6 +23,10 @@ export function getStoredToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.token);
 }
 
+export function isAuthenticated(): boolean {
+  return !!getStoredToken();
+}
+
 export function setStoredToken(token: string) {
   localStorage.setItem(STORAGE_KEYS.token, token);
 }

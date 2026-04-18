@@ -5,7 +5,7 @@ import type { User, UserRole } from '@/src/types/domain';
 import TopNav from '@/src/components/layout/TopNav';
 import MobileBottomNav from '@/src/components/layout/MobileBottomNav';
 import Footer from '@/src/components/layout/Footer';
-import RequireRole from '@/src/components/auth/RequireRole';
+import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import HomePage from '@/src/pages/HomePage';
 import LoginPage from '@/src/pages/LoginPage';
 import RegisterPage from '@/src/pages/RegisterPage';
@@ -81,50 +81,42 @@ function AppContent({
           
           <Route
             path="/booking"
-            element={
-              <RequireRole currentRole={role} allowedRole="user">
-                <BookingPage user={user!} />
-              </RequireRole>
-            }
+            element={<BookingPage user={user} />}
           />
           <Route
             path="/booking/:fieldId"
-            element={
-              <RequireRole currentRole={role} allowedRole="user">
-                <BookingPage user={user!} />
-              </RequireRole>
-            }
+            element={<BookingPage user={user} />}
           />
           <Route
             path="/payment/:bookingId"
             element={
-              <RequireRole currentRole={role} allowedRole="user">
+              <ProtectedRoute currentRole={role} allowedRole="user">
                 <PaymentUploadPage user={user!} />
-              </RequireRole>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/jadwal"
             element={
-              <RequireRole currentRole={role} allowedRole="user">
+              <ProtectedRoute currentRole={role} allowedRole="user">
                 <UserSchedulePage user={user!} />
-              </RequireRole>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/profil"
             element={
-              <RequireRole currentRole={role} allowedRole="user">
+              <ProtectedRoute currentRole={role} allowedRole="user">
                 <UserProfilePage user={user!} onLogout={onLogout} />
-              </RequireRole>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/admin"
             element={
-              <RequireRole currentRole={role} allowedRole="admin">
+              <ProtectedRoute currentRole={role} allowedRole="admin">
                 <AdminDashboard />
-              </RequireRole>
+              </ProtectedRoute>
             }
           />
           <Route path="/kontak" element={<ContactPage />} />

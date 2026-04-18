@@ -17,11 +17,7 @@ export async function fetchWithAuth<T>(url: string | URL, options: RequestInit =
   // Handle 401 Unauthorized -> Auto Logout
   if (response.status === 401) {
     clearAuthStorage();
-    // Use window.location as we're outside React's context here usually
-    // or just let it be handled by the next UI render if we use state.
-    // Setting href is a sure way to reset everything.
-    window.location.href = '/login?error=session_expired';
-    throw new Error('Sesi berakhir, silakan login kembali');
+    throw new Error('Sesi berakhir atau tidak memiliki akses (Unauthorized)');
   }
 
   const data = (await response.json().catch(() => null)) as T | { error?: string } | null;

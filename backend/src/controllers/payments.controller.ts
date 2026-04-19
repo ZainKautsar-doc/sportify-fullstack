@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { pool } from '../lib/db';
+import { expireBookings } from '../utils/expireBookings';
 
 // POST /api/payments/upload
 export const uploadPayment = async (req: Request, res: Response): Promise<any> => {
+  await expireBookings();
   const file = req.file;
   const { booking_id } = req.body;
 
@@ -39,6 +41,9 @@ export const uploadPayment = async (req: Request, res: Response): Promise<any> =
     }
     if (booking.status === 'confirmed' || booking.status === 'completed') {
       return res.status(400).json({ error: 'Booking sudah dikonfirmasi, tidak bisa upload ulang' });
+    }
+    if (booking.status === 'rejected') {
+      return res.status(400).json({ error: 'Booking sudah kadaluarsa' });
     }
 
     // Cek apakah sudah ada payment untuk booking ini (update jika ada, insert jika belum)
@@ -87,6 +92,7 @@ export const uploadPayment = async (req: Request, res: Response): Promise<any> =
 
 // GET /api/payments/:booking_id
 export const getPayment = async (req: Request, res: Response): Promise<any> => {
+  await expireBookings();
   const { booking_id } = req.params;
   const user = (req as any).user;
 

@@ -1,6 +1,6 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle2, ImagePlus, Info, LoaderCircle, Wallet } from 'lucide-react';
+import { CheckCircle2, Clock, ImagePlus, Info, LoaderCircle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Booking, User } from '@/src/types/domain';
 import { fetchWithAuth } from '@/src/lib/api';
@@ -24,6 +24,8 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
 
@@ -54,9 +56,64 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    if (!booking) return;
+
+    if (booking.status !== 'pending') {
+      if (booking.status === 'rejected') setIsExpired(true);
+      return;
+    }
+
+    const calculateRemaining = () => {
+      const createdAt = new Date(booking.created_at).getTime();
+      const now = new Date().getTime();
+      const diffInSeconds = Math.floor((createdAt + 10 * 60 * 1000 - now) / 1000);
+      return diffInSeconds;
+    };
+
+    let remTime = calculateRemaining();
+    if (remTime <= 0) {
+      setIsExpired(true);
+      setRemainingTime(0);
+      return;
+    }
+    
+    setRemainingTime(remTime);
+    
+    const interval = setInterval(() => {
+      remTime = calculateRemaining();
+      if (remTime <= 0) {
+        setIsExpired(true);
+        setRemainingTime(0);
+        clearInterval(interval);
+      } else {
+        setRemainingTime(remTime);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [booking]);
+
+  useEffect(() => {
+    if (isExpired) {
+      const timeout = setTimeout(() => {
+        navigate('/jadwal');
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isExpired, navigate]);
+
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
   const onDrop = (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragging(false);
+    if (isExpired) return;
+
     const droppedFile = event.dataTransfer.files?.[0];
     if (!droppedFile) return;
     if (!droppedFile.type.startsWith('image/')) {
@@ -114,23 +171,46 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
           <p className="text-sm text-slate-500">Transfer dulu sesuai nominal lalu kirim bukti transfer di sini. Sat set beres.</p>
         </Card>
 
+        {isExpired && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-bold text-red-800">Waktu pembayaran habis, booking dibatalkan</p>
+            <p className="mt-1 text-xs text-red-700">Mengarahkan kembali ke jadwal...</p>
+          </div>
+        )}
+
+        {!isExpired && remainingTime !== null && booking?.status === 'pending' && (
+          <div className="flex flex-col items-center justify-center space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="inline-flex items-center gap-2 text-sm font-semibold text-amber-800">
+              <Clock size={16} />
+              Sisa Waktu Pembayaran
+            </p>
+            <div className="font-mono text-3xl font-bold tracking-wider text-amber-900">
+              {formatTime(remainingTime)}
+            </div>
+            <p className="text-center text-xs text-amber-700">Segera lakukan pembayaran dalam 10 menit agar booking tidak dibatalkan otomatis</p>
+          </div>
+        )}
+
         <Card className="space-y-4">
           <label
-            onDrop={onDrop}
+            onDrop={isExpired ? undefined : onDrop}
             onDragOver={(event) => {
+              if (isExpired) return;
               event.preventDefault();
               setIsDragging(true);
             }}
             onDragLeave={() => setIsDragging(false)}
-            className={`flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 text-center transition ${
-              isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-slate-50'
+            className={`flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 text-center transition ${
+              isExpired ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-50' : isDragging ? 'border-indigo-500 bg-indigo-50 cursor-pointer' : 'border-slate-200 bg-slate-50 cursor-pointer'
             }`}
           >
             <input
               type="file"
               accept="image/*"
               className="hidden"
+              disabled={isExpired}
               onChange={(event) => {
+                if (isExpired) return;
                 const selected = event.target.files?.[0] ?? null;
                 setFile(selected);
               }}
@@ -168,7 +248,7 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
             <p>3. Upload gambar tidak blur.</p>
           </div>
 
-          <Button fullWidth onClick={submitPayment} disabled={isSubmitting || submitted || !file}>
+          <Button fullWidth onClick={submitPayment} disabled={isSubmitting || submitted || !file || isExpired}>
             {isSubmitting ? (
               <>
                 <LoaderCircle size={16} className="animate-spin" />
@@ -179,6 +259,8 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
                 <CheckCircle2 size={16} />
                 Bukti terkirim
               </>
+            ) : isExpired ? (
+              'Booking Kadaluarsa'
             ) : (
               'Kirim Bukti Sekarang'
             )}

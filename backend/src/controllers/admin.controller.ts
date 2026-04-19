@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { pool } from '../lib/db';
+import { expireBookings } from '../utils/expireBookings';
 
 export const getAdminStats = async (req: Request, res: Response): Promise<any> => {
+  await expireBookings();
   try {
     const [totalBookings, pendingBookings, revenue] = await Promise.all([
       pool.query('SELECT COUNT(*) as count FROM bookings'),
@@ -26,6 +28,7 @@ export const getAdminStats = async (req: Request, res: Response): Promise<any> =
 };
 
 export const getAdminPayments = async (req: Request, res: Response): Promise<any> => {
+  await expireBookings();
   try {
     const { rows } = await pool.query(`
       SELECT 

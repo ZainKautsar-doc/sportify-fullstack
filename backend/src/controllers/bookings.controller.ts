@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { pool } from '../lib/db';
+import { expireBookings } from '../utils/expireBookings';
 
 export const getBookings = async (req: Request, res: Response): Promise<any> => {
+  await expireBookings();
   const { date, field_id, user_id } = req.query;
   try {
     let query = `
-      SELECT b.id, b.user_id, b.field_id, TO_CHAR(b.booking_date, 'YYYY-MM-DD') as booking_date, b.start_time, b.end_time, b.status, b.total_price,
+      SELECT b.id, b.user_id, b.field_id, TO_CHAR(b.booking_date, 'YYYY-MM-DD') as booking_date, b.start_time, b.end_time, b.status, b.total_price, b.created_at,
              f.name as field_name, f.type as field_type, f.price_per_hour, u.name as user_name 
       FROM bookings b 
       JOIN fields f ON b.field_id = f.id 
@@ -50,6 +52,7 @@ export const getBookings = async (req: Request, res: Response): Promise<any> => 
 };
 
 export const getBookingSummary = async (req: Request, res: Response): Promise<any> => {
+  await expireBookings();
   const { month } = req.query; // format YYYY-MM
   try {
     let query = `
@@ -128,7 +131,7 @@ export const createBooking = async (req: Request, res: Response): Promise<any> =
       `INSERT INTO bookings 
         (user_id, field_id, booking_date, start_time, end_time, status, total_price) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) 
-       RETURNING id, user_id, field_id, booking_date, start_time, end_time, status, total_price`,
+       RETURNING id, user_id, field_id, TO_CHAR(booking_date, 'YYYY-MM-DD') as booking_date, start_time, end_time, status, total_price, created_at`,
       [userId, fieldId, booking_date, start_time, end_time, status, totalPrice]
     );
 

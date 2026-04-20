@@ -1,6 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import session from 'express-session';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+import './config/passport'; // register passport strategy
+import passport from 'passport';
 
 import authRoutes from './routes/auth.routes';
 import fieldRoutes from './routes/fields.routes';
@@ -11,8 +18,27 @@ import availabilityRoutes from './routes/availability.routes';
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+
+// Session is needed by passport internally even for stateless JWT flow
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'default_session_secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // set to true with HTTPS in prod
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get('/', (req, res) => {
   res.send('Sportify API Running...');

@@ -17,6 +17,7 @@ import PaymentUploadPage from '@/src/pages/PaymentUploadPage';
 import UserSchedulePage from '@/src/pages/UserSchedulePage';
 import UserProfilePage from '@/src/pages/UserProfilePage';
 import ContactPage from '@/src/pages/ContactPage';
+import OAuthSuccessPage from '@/src/pages/OAuthSuccessPage';
 
 export default function App() {
   const { role, user, setRole, setUser, login, logout, isInitializing } = useAuth();
@@ -120,6 +121,7 @@ function AppContent({
             }
           />
           <Route path="/kontak" element={<ContactPage />} />
+          <Route path="/oauth-success" element={<OAuthSuccessPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

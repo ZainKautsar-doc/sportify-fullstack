@@ -3,6 +3,23 @@ import { Mail, Lock, UserPlus, User as UserIcon } from 'lucide-react';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
 import { useNavigate, Link } from 'react-router-dom';
+
+/** Inline Google logo SVG */
+function GoogleIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      className="h-5 w-5 shrink-0"
+      aria-hidden="true"
+    >
+      <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.5 33.2 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z" />
+      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.8 13.6-4.7l-6.3-5.2C29.4 35.7 26.8 36 24 36c-5.2 0-9.6-2.8-11.3-7l-6.5 5C9.6 39.6 16.3 44 24 44z" />
+      <path fill="#1565C0" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.6-4.8 6l6.3 5.2C40.8 35.5 44 30.2 44 24c0-1.3-.1-2.7-.4-4z" />
+    </svg>
+  );
+}
 import { toast } from 'sonner';
 import { fetchWithAuth } from '@/src/lib/api';
 import type { User } from '@/src/types/domain';
@@ -145,7 +162,24 @@ export default function RegisterPage() {
             {loading ? 'Mendaftarkan...' : 'Daftar'}
           </Button>
 
-          <div className="mt-6 text-center text-sm text-slate-500">
+          {/* Divider */}
+          <div className="relative my-1 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-200" />
+            <span className="text-xs text-slate-400 font-medium">atau</span>
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
+
+          {/* Google Login Button */}
+          <button
+            type="button"
+            onClick={() => { window.location.href = 'http://localhost:5000/api/auth/google'; }}
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md active:scale-[0.98]"
+          >
+            <GoogleIcon />
+            <span>Masuk dengan Google</span>
+          </button>
+
+          <div className="mt-4 text-center text-sm text-slate-500">
             Sudah punya akun?{' '}
             <Link to="/login" className="font-semibold text-[#0f2d5e] hover:underline">
               Masuk

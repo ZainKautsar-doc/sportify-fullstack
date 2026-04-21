@@ -17,11 +17,11 @@ export const getAvailability = async (req: Request, res: Response): Promise<any>
   }
 
   try {
-    // Ambil semua booking di tanggal + lapangan tersebut yang tidak rejected
+    // Ambil semua booking di tanggal + lapangan tersebut yang aktif (pending/confirmed)
     const { rows: bookings } = await pool.query(
       `SELECT start_time, end_time 
        FROM bookings 
-       WHERE booking_date = $1 AND field_id = $2 AND status != 'rejected'`,
+       WHERE booking_date = $1 AND field_id = $2 AND status IN ('pending', 'confirmed')`,
       [date, field_id]
     );
 

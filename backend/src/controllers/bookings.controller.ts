@@ -58,7 +58,7 @@ export const getBookingSummary = async (req: Request, res: Response): Promise<an
     let query = `
       SELECT TO_CHAR(booking_date, 'YYYY-MM-DD') as booking_date, COUNT(*) as total
       FROM bookings
-      WHERE status != 'rejected'
+      WHERE status IN ('pending', 'confirmed', 'completed')
     `;
     const params: any[] = [];
 
@@ -107,6 +107,27 @@ export const createBooking = async (req: Request, res: Response): Promise<any> =
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // 0. Proactively expire bookings before validation
+    await expireBookings();
+
+    // 0.1 Check for overlaps with active bookings (pending/confirmed)
+    // Overlap logic: (start_time < new_end) AND (end_time > new_start)
+    const conflictRes = await client.query(
+      `SELECT id FROM bookings 
+       WHERE field_id = $1 
+         AND booking_date = $2 
+         AND status IN ('pending', 'confirmed')
+         AND start_time < $4
+         AND end_time > $3
+       LIMIT 1`,
+      [fieldId, booking_date, start_time, end_time]
+    );
+
+    if (conflictRes.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Jadwal bentrok. Slot waktu tersebut sudah di-booking atau sedang dalam proses pembayaran.' });
+    }
 
     // 1. Check if field exists and retrieve price_per_hour
     const fieldRes = await client.query('SELECT price_per_hour FROM fields WHERE id = $1', [fieldId]);

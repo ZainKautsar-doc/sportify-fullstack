@@ -2,10 +2,10 @@ import { pool } from '../lib/db';
 
 export const expireBookings = async () => {
   try {
-    // Return booking ids that were updated to rejected
+    // Return booking ids that were updated to expired
     const { rows } = await pool.query(`
       UPDATE bookings
-      SET status = 'rejected'
+      SET status = 'expired'
       WHERE status = 'pending' AND created_at < NOW() - INTERVAL '10 minutes'
       RETURNING id
     `);

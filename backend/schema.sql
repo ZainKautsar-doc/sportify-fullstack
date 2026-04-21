@@ -27,11 +27,14 @@ CREATE TABLE IF NOT EXISTS bookings (
   booking_date DATE        NOT NULL,
   start_time   TIME        NOT NULL,
   end_time     TIME        NOT NULL,
-  status       TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'rejected', 'completed')),
+  status       TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'rejected', 'completed', 'expired', 'cancelled')),
   total_price  NUMERIC     NOT NULL DEFAULT 0,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (field_id, booking_date, start_time)
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Partial Unique Index: Only allow one active booking (pending/confirmed) per slot
+CREATE UNIQUE INDEX IF NOT EXISTS bookings_no_overlap_idx ON bookings (field_id, booking_date, start_time) 
+WHERE (status IN ('pending', 'confirmed'));
 
 -- Payments
 CREATE TABLE IF NOT EXISTS payments (

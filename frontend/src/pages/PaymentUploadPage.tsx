@@ -1,6 +1,6 @@
 import { type DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle2, Clock, ImagePlus, Info, LoaderCircle, Wallet } from 'lucide-react';
+import { CheckCircle2, Clock, ImagePlus, Info, LoaderCircle, QrCode, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Booking, User } from '@/src/types/domain';
 import { fetchWithAuth } from '@/src/lib/api';
@@ -168,7 +168,7 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
       <section className="space-y-5">
         <Card className="space-y-3">
           <h1 className="font-display text-3xl font-bold text-slate-900">Upload Pembayaran</h1>
-          <p className="text-sm text-slate-500">Transfer dulu sesuai nominal lalu kirim bukti transfer di sini. Sat set beres.</p>
+          <p className="text-sm text-slate-500">Pindai kode QR di bawah ini menggunakan aplikasi pembayaran favoritmu (Gopay, OVO, Dana, m-Banking, dll).</p>
         </Card>
 
         {isExpired && (
@@ -191,7 +191,71 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
           </div>
         )}
 
-        <Card className="space-y-4">
+        <section className="space-y-6">
+          {/* ① QRIS Card — Visual Focus */}
+          <Card className="group relative overflow-hidden bg-white p-8 shadow-xl shadow-indigo-100/40 transition-all border-slate-100 rounded-[32px]">
+            <div className="space-y-6 text-center">
+              <div className="space-y-1.5">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0f2d5e]/5 text-[#0f2d5e]">
+                  <QrCode size={20} />
+                </div>
+                <h2 className="font-display text-2xl font-extrabold text-slate-900 tracking-tight mt-3">Scan QRIS</h2>
+                <p className="text-sm text-slate-400">Gunakan e-wallet atau mobile banking kamu</p>
+              </div>
+
+              {/* QR Wrapper — Full Visibility & Safe Area */}
+              <div className="relative mx-auto aspect-square w-64 overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 shadow-inner ring-4 ring-slate-50">
+                <img
+                  src="/img/payment/qris.jpeg"
+                  alt="QRIS Payment Code"
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+              </div>
+
+              {/* Nominal Highlight */}
+              <div className="space-y-1.5 pb-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0f2d5e]/40">Total yang harus dibayar</p>
+                <p className="font-display text-4xl font-black text-[#0f2d5e] tracking-tight">
+                  {formatCurrency(booking.total_price)}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* ② Instructions Card */}
+          <Card className="space-y-5 border-slate-200/60 bg-slate-50/30">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#0f2d5e] shadow-sm ring-1 ring-slate-100">
+                <Smartphone size={20} />
+              </div>
+              <div>
+                <p className="font-display text-lg font-bold text-slate-800">Cara Pembayaran</p>
+                <p className="text-xs text-slate-400">Lakukan scan dan selesaikan transaksi</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                { step: "1", text: "Buka aplikasi e-wallet atau m-banking" },
+                { step: "2", text: "Scan QR code di atas secara tepat" },
+                { step: "3", text: "Pay nominal sesuai total tagihan" },
+                { step: "4", text: "Simpan & upload struk pembayaran" }
+              ].map((item) => (
+                <div key={item.step} className="flex items-center gap-3 rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-100 transition hover:ring-indigo-200">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#0f2d5e] text-[10px] font-black text-white">{item.step}</span>
+                  <span className="text-xs font-semibold text-slate-600 leading-snug">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
+
+        <Card className="space-y-5">
+          <div className="space-y-1">
+            <h2 className="font-display text-xl font-bold text-slate-900">Upload Bukti</h2>
+            <p className="text-sm text-slate-500">Kirim screenshot atau foto struk pembayaran kamu.</p>
+          </div>
+
           <label
             onDrop={isExpired ? undefined : onDrop}
             onDragOver={(event) => {
@@ -200,8 +264,8 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
               setIsDragging(true);
             }}
             onDragLeave={() => setIsDragging(false)}
-            className={`flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 text-center transition ${
-              isExpired ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-50' : isDragging ? 'border-indigo-500 bg-indigo-50 cursor-pointer' : 'border-slate-200 bg-slate-50 cursor-pointer'
+            className={`flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-10 text-center transition ${
+              isExpired ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-50' : isDragging ? 'border-indigo-500 bg-indigo-50 cursor-pointer' : 'border-slate-200 bg-slate-50/50 hover:border-indigo-300 cursor-pointer'
             }`}
           >
             <input
@@ -215,54 +279,49 @@ export default function PaymentUploadPage({ user }: PaymentUploadPageProps) {
                 setFile(selected);
               }}
             />
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm transition group-hover:scale-110">
               <ImagePlus size={30} />
             </div>
-            <p className="mt-4 text-lg font-semibold text-slate-800">Drag & drop bukti pembayaran</p>
-            <p className="mt-1 text-sm text-slate-500">atau klik untuk pilih file (PNG/JPG)</p>
+            <p className="mt-4 text-lg font-bold text-slate-800">Drag & drop bukti bayar</p>
+            <p className="mt-1 text-sm text-slate-500">atau klik untuk telusuri file (PNG/JPG)</p>
           </label>
 
           {previewUrl ? (
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-slate-700">Preview file</p>
-              <img src={previewUrl} alt="Preview bukti pembayaran" className="max-h-72 w-full rounded-2xl object-cover" />
+            <div className="space-y-3">
+              <p className="text-sm font-bold text-slate-700">Preview Bukti</p>
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200">
+                <img src={previewUrl} alt="Preview bukti pembayaran" className="max-h-80 w-full object-cover" />
+              </div>
             </div>
           ) : null}
 
-          <div className="space-y-2 rounded-2xl bg-indigo-50 p-4 text-sm">
-            <p className="inline-flex items-center gap-2 font-semibold text-indigo-700">
-              <Wallet size={16} />
-              Info rekening
+          <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/30 p-4 text-sm text-slate-600">
+            <p className="inline-flex items-center gap-2 font-bold text-slate-800">
+              <Info size={16} className="text-indigo-600" />
+              Penting!
             </p>
-            <p className="text-slate-700">BCA 1234567890 a.n Sportify Indonesia</p>
-            <p className="text-slate-700">Nominal: {formatCurrency(booking.total_price)}</p>
+            <ul className="space-y-2">
+              <li>• Pastikan nominal transfer Sesuai.</li>
+              <li>• Nama dan status transaksi harus terlihat jelas.</li>
+              <li>• Gukanan file asli agar tidak pecah/blur.</li>
+            </ul>
           </div>
 
-          <div className="space-y-2 rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
-            <p className="inline-flex items-center gap-2 font-semibold text-slate-800">
-              <Info size={16} />
-              Checklist sebelum kirim
-            </p>
-            <p>1. Pastikan nominal transfer sesuai.</p>
-            <p>2. Nama pengirim terlihat jelas di screenshot.</p>
-            <p>3. Upload gambar tidak blur.</p>
-          </div>
-
-          <Button fullWidth onClick={submitPayment} disabled={isSubmitting || submitted || !file || isExpired}>
+          <Button fullWidth onClick={submitPayment} disabled={isSubmitting || submitted || !file || isExpired} className="h-12 text-base font-bold">
             {isSubmitting ? (
               <>
-                <LoaderCircle size={16} className="animate-spin" />
+                <LoaderCircle size={20} className="animate-spin" />
                 Mengirim bukti...
               </>
             ) : submitted ? (
               <>
-                <CheckCircle2 size={16} />
-                Bukti terkirim
+                <CheckCircle2 size={20} />
+                Bukti Berhasil Terkirim
               </>
             ) : isExpired ? (
               'Booking Kadaluarsa'
             ) : (
-              'Kirim Bukti Sekarang'
+              'Kirim Bukti Pembayaran'
             )}
           </Button>
         </Card>

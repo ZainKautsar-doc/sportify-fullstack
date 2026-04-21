@@ -33,6 +33,12 @@ export function getImagesByFieldType(type: string): string[] {
       '/img/minisoccerdetail/minisoccer3.webp',
       '/img/minisoccerdetail/minisoccer4.webp',
     ],
+    minisoccer: [
+      '/img/minisoccerdetail/minisoccer1.webp',
+      '/img/minisoccerdetail/minisoccer2.webp',
+      '/img/minisoccerdetail/minisoccer3.webp',
+      '/img/minisoccerdetail/minisoccer4.webp',
+    ],
     padel: [
       '/img/padeldetail/padel1.webp',
       '/img/padeldetail/padel2.webp',

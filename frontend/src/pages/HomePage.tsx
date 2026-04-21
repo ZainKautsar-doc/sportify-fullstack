@@ -174,13 +174,12 @@ export default function HomePage({ role }: HomePageProps) {
                 const status = bookedCount >= 7 ? "full" : "available";
                 const bookingHref = `/booking/${field.id}`;
                 return (
-                  <div key={field.id}>
-                    <FieldCard
-                      field={field}
-                      status={status}
-                      bookingHref={bookingHref}
-                    />
-                  </div>
+                  <FieldCard
+                    key={field.id}
+                    field={field}
+                    status={status}
+                    bookingHref={bookingHref}
+                  />
                 );
               })}
             </div>

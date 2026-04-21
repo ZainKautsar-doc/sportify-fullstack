@@ -19,21 +19,40 @@ export function formatDateLabel(value: string) {
   }
 }
 
-export function toImageByFieldType(type: string) {
-  const mapping: Record<string, string> = {
-    futsal:
-      'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80',
-    'mini soccer':
-      'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80',
-    padel:
-      'https://images.unsplash.com/photo-1632644011560-e95e2eaf64b2?auto=format&fit=crop&w=1200&q=80',
-    badminton:
-      'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1200&q=80',
+export function getImagesByFieldType(type: string): string[] {
+  const mapping: Record<string, string[]> = {
+    futsal: [
+      '/img/futsaldetail/futsal1.webp',
+      '/img/futsaldetail/futsal2.webp',
+      '/img/futsaldetail/futsal3.webp',
+      '/img/futsaldetail/futsal4.webp',
+    ],
+    'mini soccer': [
+      '/img/minisoccerdetail/minisoccer1.webp',
+      '/img/minisoccerdetail/minisoccer2.webp',
+      '/img/minisoccerdetail/minisoccer3.webp',
+      '/img/minisoccerdetail/minisoccer4.webp',
+    ],
+    padel: [
+      '/img/padeldetail/padel1.webp',
+      '/img/padeldetail/padel2.webp',
+      '/img/padeldetail/padel3.webp',
+      '/img/padeldetail/padel4.webp',
+    ],
+    badminton: [
+      '/img/badmintondetail/badminton1.webp',
+      '/img/badmintondetail/badminton2.webp',
+      '/img/badmintondetail/badminton3.webp',
+      '/img/badmintondetail/badminton4.webp',
+    ],
   };
 
   const key = type.toLowerCase();
-  return (
-    mapping[key] ??
-    'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=1200&q=80'
-  );
+  return mapping[key] ?? mapping.futsal; // Fallback to futsal
 }
+
+export function toImageByFieldType(type: string) {
+  const images = getImagesByFieldType(type);
+  return images[0];
+}
+

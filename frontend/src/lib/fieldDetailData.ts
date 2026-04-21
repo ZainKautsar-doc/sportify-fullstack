@@ -1,5 +1,5 @@
 import type { Field } from '@/src/types/domain';
-import { toImageByFieldType } from '@/src/lib/format';
+import { toImageByFieldType, getImagesByFieldType } from '@/src/lib/format';
 
 export interface VenueDetailContent {
   name: string;
@@ -46,12 +46,7 @@ const TYPE_PRESETS: Record<string, VenuePreset> = {
     facilities: ['Parkir', 'Toilet', 'Musholla', 'Ruang Ganti', 'CCTV', 'Cafe'],
     promoText: 'Diskon hingga Rp20.000 untuk booking hari ini sebelum jam 18.00.',
     mapQuery: 'Sportify+Futsal+Arena+Cilandak+Jakarta+Selatan',
-    images: [
-      'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=900&q=80',
-    ],
+    images: [],
     ratingBase: 4.8,
     reviewBase: 214,
   },
@@ -71,12 +66,7 @@ const TYPE_PRESETS: Record<string, VenuePreset> = {
     facilities: ['Parkir', 'Toilet', 'Ruang Ganti', 'CCTV', 'Cafe', 'Tribun'],
     promoText: 'Cashback Rp30.000 untuk booking mini soccer di weekday.',
     mapQuery: 'Sportify+Mini+Soccer+Serpong',
-    images: [
-      'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&w=900&q=80',
-    ],
+    images: [],
     ratingBase: 4.7,
     reviewBase: 173,
   },
@@ -96,12 +86,7 @@ const TYPE_PRESETS: Record<string, VenuePreset> = {
     facilities: ['Parkir', 'Toilet', 'Musholla', 'CCTV', 'Cafe', 'Pro Shop'],
     promoText: 'Gratis sewa raket untuk booking padel pertama minggu ini.',
     mapQuery: 'Sportify+Padel+Kebon+Jeruk',
-    images: [
-      'https://images.unsplash.com/photo-1632644011560-e95e2eaf64b2?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1617083778253-3e85f7f684f6?auto=format&fit=crop&w=900&q=80',
-    ],
+    images: [],
     ratingBase: 4.9,
     reviewBase: 129,
   },
@@ -121,12 +106,7 @@ const TYPE_PRESETS: Record<string, VenuePreset> = {
     facilities: ['Parkir', 'Toilet', 'Musholla', 'Ruang Ganti', 'CCTV', 'Cafe'],
     promoText: 'Potongan 10% untuk booking badminton minimal 2 jam.',
     mapQuery: 'Sportify+Badminton+Buahbatu+Bandung',
-    images: [
-      'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1560012057-43762a6b36d3?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1599391398131-c89d8c63a33e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1597176060230-ecc2fca9f684?auto=format&fit=crop&w=900&q=80',
-    ],
+    images: [],
     ratingBase: 4.7,
     reviewBase: 242,
   },
@@ -170,7 +150,7 @@ export function getVenueDetailContent(field: Field): VenueDetailContent {
     rules: preset.rules,
     facilities: preset.facilities,
     promoText: preset.promoText,
-    images: preset.images.length > 0 ? preset.images : [toImageByFieldType(field.type)],
+    images: getImagesByFieldType(field.type),
     mapQuery: preset.mapQuery,
   };
 }

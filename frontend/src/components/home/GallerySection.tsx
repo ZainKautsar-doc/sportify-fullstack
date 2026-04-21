@@ -45,7 +45,7 @@ export default function GallerySection({ bookingHref = '/booking' }: { bookingHr
               {/* Gambar 1: Padel Outdoor */}
               <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
                 <img 
-                  src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=600&q=80" 
+                  src="/img/padeldetail/padel1.webp" 
                   alt="Padel Court Outdoor" 
                   className="w-full h-full object-cover transition-all duration-700 aspect-[4/5] group-hover:scale-105 group-hover:brightness-110"
                 />
@@ -53,7 +53,7 @@ export default function GallerySection({ bookingHref = '/booking' }: { bookingHr
               {/* Gambar 2: Futsal Indoor */}
               <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
                 <img 
-                  src="https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=600&q=80" 
+                  src="/img/futsaldetail/futsal2.webp" 
                   alt="Futsal Indoor Premium" 
                   className="w-full h-full object-cover transition-all duration-700 aspect-square group-hover:scale-105 group-hover:brightness-110"
                 />
@@ -65,7 +65,7 @@ export default function GallerySection({ bookingHref = '/booking' }: { bookingHr
               {/* Gambar 3: Badminton Indoor */}
               <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
                 <img 
-                  src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80" 
+                  src="/img/badmintondetail/badminton1.webp" 
                   alt="Badminton Indoor" 
                   className="w-full h-full object-cover transition-all duration-700 aspect-square group-hover:scale-105 group-hover:brightness-110"
                 />
@@ -73,7 +73,7 @@ export default function GallerySection({ bookingHref = '/booking' }: { bookingHr
               {/* Gambar 4: Mini Soccer Outdoor */}
               <div className="group overflow-hidden rounded-2xl shadow-sm bg-slate-200">
                 <img 
-                  src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=600&q=80" 
+                  src="/img/minisoccerdetail/minisoccer1.webp" 
                   alt="Mini Soccer Outdoor" 
                   className="w-full h-full object-cover transition-all duration-700 aspect-[4/5] group-hover:scale-105 group-hover:brightness-110"
                 />

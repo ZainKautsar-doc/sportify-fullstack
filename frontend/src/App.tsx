@@ -1,26 +1,34 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { toast, Toaster } from 'sonner';
-import type { User, UserRole } from '@/src/types/domain';
-import TopNav from '@/src/components/layout/TopNav';
-import MobileBottomNav from '@/src/components/layout/MobileBottomNav';
-import Footer from '@/src/components/layout/Footer';
-import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
-import HomePage from '@/src/pages/HomePage';
-import LoginPage from '@/src/pages/LoginPage';
-import RegisterPage from '@/src/pages/RegisterPage';
-import { useAuth } from '@/src/hooks/useAuth';
-import BookingPage from '@/src/pages/BookingPage';
-import AdminDashboard from '@/src/pages/AdminDashboard';
-import FieldDetailPage from '@/src/pages/FieldDetailPage';
-import PaymentUploadPage from '@/src/pages/PaymentUploadPage';
-import UserSchedulePage from '@/src/pages/UserSchedulePage';
-import UserProfilePage from '@/src/pages/UserProfilePage';
-import ContactPage from '@/src/pages/ContactPage';
-import OAuthSuccessPage from '@/src/pages/OAuthSuccessPage';
+import { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { toast, Toaster } from "sonner";
+import type { User, UserRole } from "@/src/types/domain";
+import TopNav from "@/src/components/layout/TopNav";
+import MobileBottomNav from "@/src/components/layout/MobileBottomNav";
+import Footer from "@/src/components/layout/Footer";
+import ProtectedRoute from "@/src/components/auth/ProtectedRoute";
+import HomePage from "@/src/pages/HomePage";
+import LoginPage from "@/src/pages/LoginPage";
+import RegisterPage from "@/src/pages/RegisterPage";
+import { useAuth } from "@/src/hooks/useAuth";
+import BookingPage from "@/src/pages/BookingPage";
+import AdminDashboard from "@/src/pages/AdminDashboard";
+import FieldDetailPage from "@/src/pages/FieldDetailPage";
+import PaymentUploadPage from "@/src/pages/PaymentUploadPage";
+import UserSchedulePage from "@/src/pages/UserSchedulePage";
+import UserProfilePage from "@/src/pages/UserProfilePage";
+import ContactPage from "@/src/pages/ContactPage";
+import OAuthSuccessPage from "@/src/pages/OAuthSuccessPage";
 
 export default function App() {
-  const { role, user, setRole, setUser, login, logout, isInitializing } = useAuth();
+  const { role, user, setRole, setUser, login, logout, isInitializing } =
+    useAuth();
 
   if (isInitializing) {
     return null; // or a nice loading screen
@@ -29,11 +37,18 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="flex min-h-screen flex-col bg-app text-slate-900">
-        <AppContent role={role} user={user} setRole={setRole} setUser={setUser} onLogin={login} onLogout={logout} />
+        <AppContent
+          role={role}
+          user={user}
+          setRole={setRole}
+          setUser={setUser}
+          onLogin={login}
+          onLogout={logout}
+        />
         <Toaster
           position="top-right"
           toastOptions={{
-            className: 'rounded-2xl border border-slate-100 bg-white shadow-xl',
+            className: "rounded-2xl border border-slate-100 bg-white shadow-xl",
           }}
         />
       </div>
@@ -62,28 +77,46 @@ function AppContent({
   const handleLogin = async (email?: string, password?: string) => {
     try {
       const role = await onLogin(email, password);
-      navigate(role === 'admin' ? '/admin' : '/');
+      navigate(role === "admin" ? "/admin" : "/");
     } catch (error) {
       throw error;
     }
   };
 
-  const isFullWidth = ['/', '/kontak'].includes(location.pathname);
+  const isFullWidth = ["/", "/kontak"].includes(location.pathname);
 
   return (
     <>
       <TopNav role={role} userName={user?.name} onLogout={onLogout} />
-      <main className={`flex-1 w-full ${isFullWidth ? '' : 'mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8'} pb-[calc(env(safe-area-inset-bottom)+5.8rem)]`}>
+      <main
+        className={`flex-1 w-full ${isFullWidth ? "" : "mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8"} pb-[calc(env(safe-area-inset-bottom)+5.8rem)]`}
+      >
         <Routes>
-          <Route path="/" element={role === 'admin' ? <Navigate to="/admin" replace /> : <HomePage role={role} />} />
+          <Route
+            path="/"
+            element={
+              role === "admin" ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <HomePage role={role} />
+              )
+            }
+          />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/lapangan/:fieldId" element={role === 'admin' ? <Navigate to="/admin" replace /> : <FieldDetailPage role={role} />} />
-          
+          <Route path="/oauth-success" element={<OAuthSuccessPage />} />
           <Route
-            path="/booking"
-            element={<BookingPage user={user} />}
+            path="/lapangan/:fieldId"
+            element={
+              role === "admin" ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <FieldDetailPage role={role} />
+              )
+            }
           />
+
+          <Route path="/booking" element={<BookingPage user={user} />} />
           <Route
             path="/booking/:fieldId"
             element={<BookingPage user={user} />}
@@ -126,7 +159,7 @@ function AppContent({
         </Routes>
       </main>
       <MobileBottomNav role={role} />
-      {role === 'admin' ? null : <Footer />}
+      {role === "admin" ? null : <Footer />}
     </>
   );
 }

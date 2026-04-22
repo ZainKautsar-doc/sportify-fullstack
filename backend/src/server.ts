@@ -3,6 +3,12 @@ import { pool } from "./lib/db";
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import authRoutes from './routes/auth.routes';
+import fieldRoutes from './routes/fields.routes';
+import bookingRoutes from './routes/bookings.routes';
+import paymentRoutes from './routes/payments.routes';
+import adminRoutes from './routes/admin.routes';
+import availabilityRoutes from './routes/availability.routes';
 
 dotenv.config();
 
@@ -30,6 +36,13 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
+
+app.use('/api/auth', authRoutes);
+app.use('/api/fields', fieldRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/availability', availabilityRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend server is running on port ${PORT}`);

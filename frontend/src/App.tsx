@@ -10,7 +10,7 @@ import {
 import { toast, Toaster } from "sonner";
 import type { User, UserRole } from "@/src/types/domain";
 import TopNav from "@/src/components/layout/TopNav";
-import MobileBottomNav from "@/src/components/layout/MobileBottomNav";
+
 import Footer from "@/src/components/layout/Footer";
 import ProtectedRoute from "@/src/components/auth/ProtectedRoute";
 import HomePage from "@/src/pages/HomePage";
@@ -89,7 +89,7 @@ function AppContent({
     <>
       <TopNav role={role} userName={user?.name} onLogout={onLogout} />
       <main
-        className={`flex-1 w-full ${isFullWidth ? "" : "mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8"} pb-[calc(env(safe-area-inset-bottom)+5.8rem)]`}
+        className={`flex-1 w-full ${isFullWidth ? "" : "mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8"}`}
       >
         <Routes>
           <Route
@@ -157,7 +157,7 @@ function AppContent({
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <MobileBottomNav role={role} />
+
       {role === "admin" ? null : <Footer />}
     </>
   );

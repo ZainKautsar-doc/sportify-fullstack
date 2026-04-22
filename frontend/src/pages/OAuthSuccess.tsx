@@ -10,7 +10,9 @@ export default function OAuthSuccess() {
 
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 100);
     } else {
       navigate("/login?error=oauth_failed");
     }

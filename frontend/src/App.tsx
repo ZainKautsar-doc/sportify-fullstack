@@ -24,7 +24,7 @@ import PaymentUploadPage from "@/src/pages/PaymentUploadPage";
 import UserSchedulePage from "@/src/pages/UserSchedulePage";
 import UserProfilePage from "@/src/pages/UserProfilePage";
 import ContactPage from "@/src/pages/ContactPage";
-import OAuthSuccessPage from "@/src/pages/OAuthSuccessPage";
+import OAuthSuccess from "./pages/OAuthSuccess";
 
 export default function App() {
   const { role, user, setRole, setUser, login, logout, isInitializing } =
@@ -104,7 +104,7 @@ function AppContent({
           />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/oauth-success" element={<OAuthSuccessPage />} />
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
           <Route
             path="/lapangan/:fieldId"
             element={
@@ -154,7 +154,7 @@ function AppContent({
             }
           />
           <Route path="/kontak" element={<ContactPage />} />
-          <Route path="/oauth-success" element={<OAuthSuccessPage />} />
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

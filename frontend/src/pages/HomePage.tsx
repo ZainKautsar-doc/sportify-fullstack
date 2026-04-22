@@ -15,6 +15,7 @@ import VenueMapSection from "@/src/components/home/VenueMapSection";
 import ContactSection from "@/src/components/home/ContactSection";
 import FAQAccordion from "@/src/components/home/FAQAccordion";
 import heroImage from "@/src/heroimg/herobaner.webp";
+import { toast } from "sonner";
 
 interface HomePageProps {
   role: UserRole | null;
@@ -56,11 +57,13 @@ export default function HomePage({ role }: HomePageProps) {
     setError(null);
     try {
       const today = format(new Date(), "yyyy-MM-dd");
-      // availability info can be fetched via fetchWithAuth, 
+      // availability info can be fetched via fetchWithAuth,
       // but we wrap in try-catch to not crash if guest
       const [fieldsData, bookingData] = await Promise.all([
         fetchWithAuth<Field[]>("/api/fields"),
-        fetchWithAuth<Booking[]>(`/api/bookings?date=${today}`).catch(() => [] as Booking[]),
+        fetchWithAuth<Booking[]>(`/api/bookings?date=${today}`).catch(
+          () => [] as Booking[],
+        ),
       ]);
       setFields(fieldsData);
       setTodayBookings(bookingData);
@@ -118,7 +121,7 @@ export default function HomePage({ role }: HomePageProps) {
                 key={name}
                 onClick={() => {
                   const field = fields.find(
-                    (f) => f.type.toLowerCase() === name.toLowerCase()
+                    (f) => f.type.toLowerCase() === name.toLowerCase(),
                   );
                   if (field) {
                     navigate(`/lapangan/${field.id}`);

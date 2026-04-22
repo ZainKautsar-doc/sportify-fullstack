@@ -154,7 +154,6 @@ function AppContent({
             }
           />
           <Route path="/kontak" element={<ContactPage />} />
-          <Route path="/oauth-success" element={<OAuthSuccess />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

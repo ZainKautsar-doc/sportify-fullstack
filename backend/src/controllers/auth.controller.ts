@@ -31,7 +31,6 @@ export const register = async (req: Request, res: Response): Promise<any> => {
 
     // Hash password with bcrypt
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    bcrypt.hash("password_lama", 10).then(console.log);
 
     // Insert ke database
     const { rows } = await pool.query(

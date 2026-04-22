@@ -33,6 +33,7 @@ router.get(
 
     const token = generateToken({
       id: user.id,
+      name: (user as { id: number; email: string; role: string; name?: string }).name ?? '',
       email: user.email,
       role: user.role,
     });

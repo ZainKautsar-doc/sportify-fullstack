@@ -4,7 +4,7 @@ import { format, subDays } from 'date-fns';
 import { CheckCircle2, Clock3, Eye, Plus, TrendingUp, Wallet, XCircle, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AdminStats, Booking, Field, AdminPayment } from '@/src/types/domain';
-import { fetchWithAuth } from '@/src/lib/api';
+import { fetchWithAuth, API } from '@/src/lib/api';
 import { formatCurrency } from '@/src/lib/format';
 import { Card } from '@/src/components/ui/Card';
 import Badge from '@/src/components/ui/Badge';
@@ -50,10 +50,10 @@ export default function AdminDashboard() {
     setError(null);
     try {
       const [statsData, bookingsData, fieldsData, paymentsData] = await Promise.all([
-        fetchWithAuth<AdminStats>('/api/admin/stats'),
-        fetchWithAuth<Booking[]>('/api/bookings'),
-        fetchWithAuth<Field[]>('/api/fields'),
-        fetchWithAuth<AdminPayment[]>('/api/admin/payments'),
+        fetchWithAuth<AdminStats>(`${API}/api/admin/stats`),
+        fetchWithAuth<Booking[]>(`${API}/api/bookings`),
+        fetchWithAuth<Field[]>(`${API}/api/fields`),
+        fetchWithAuth<AdminPayment[]>(`${API}/api/admin/payments`),
       ]);
       setStats(statsData);
       setBookings(bookingsData);
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
   // Fallback for direct booking status update
   const updateStatus = async (bookingId: number, status: Booking['status']) => {
     try {
-      await fetchWithAuth(`/api/bookings/${bookingId}/status`, {
+      await fetchWithAuth(`${API}/api/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
 
   const approvePayment = async (paymentId: number) => {
     try {
-      await fetchWithAuth(`/api/admin/approve/${paymentId}`, { method: 'PUT' });
+      await fetchWithAuth(`${API}/api/admin/approve/${paymentId}`, { method: 'PUT' });
       toast.success('Pembayaran disetujui, booking dikonfirmasi 🎉');
       await fetchAllData();
     } catch (err) {
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
   const rejectPayment = async (paymentId: number) => {
     if (!window.confirm('Yakin menolak pembayaran ini? Booking juga akan di-reject.')) return;
     try {
-      await fetchWithAuth(`/api/admin/reject/${paymentId}`, { method: 'PUT' });
+      await fetchWithAuth(`${API}/api/admin/reject/${paymentId}`, { method: 'PUT' });
       toast.success('Pembayaran ditolak.');
       await fetchAllData();
     } catch (err) {
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
 
     setSubmittingField(true);
     try {
-      await fetchWithAuth('/api/fields', {
+      await fetchWithAuth(`${API}/api/fields`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
   const deleteField = async (fieldId: number) => {
     if (!window.confirm('Yakin mau hapus lapangan ini?')) return;
     try {
-      await fetchWithAuth(`/api/fields/${fieldId}`, { method: 'DELETE' });
+      await fetchWithAuth(`${API}/api/fields/${fieldId}`, { method: 'DELETE' });
       toast.success('Lapangan dihapus');
       await fetchAllData();
     } catch (err) {
@@ -281,11 +281,11 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 text-center">
                         <div 
                           className="inline-block relative cursor-pointer rounded-lg overflow-hidden border border-slate-200 hover:border-indigo-500 transition-colors"
-                          onClick={() => setSelectedProof(p.payment_proof.startsWith('/uploads') ? p.payment_proof : `/uploads/${p.payment_proof}`)}
+                          onClick={() => setSelectedProof(p.payment_proof.startsWith('http') ? p.payment_proof : `${API}${p.payment_proof.startsWith('/') ? '' : '/'}${p.payment_proof}`)}
                         >
                           <div className="w-20 h-20 bg-slate-100 flex flex-col items-center justify-center group">
                             <img 
-                              src={p.payment_proof.startsWith('/uploads') ? p.payment_proof : `/uploads/${p.payment_proof}`} 
+                              src={p.payment_proof.startsWith('http') ? p.payment_proof : `${API}${p.payment_proof.startsWith('/') ? '' : '/'}${p.payment_proof}`} 
                               alt="Bukti Transfer"
                               className="w-full h-full object-cover"
                             />

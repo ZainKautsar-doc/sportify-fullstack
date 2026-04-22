@@ -4,7 +4,7 @@ import { id } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Booking } from '@/src/types/domain';
 import { formatCurrency } from '@/src/lib/format';
-import { fetchWithAuth } from '@/src/lib/api';
+import { fetchWithAuth, API } from '@/src/lib/api';
 import { Card } from '@/src/components/ui/Card';
 import CalendarDay from '@/src/components/admin/calendar/CalendarDay';
 import SlotDetailModal from '@/src/components/admin/calendar/SlotDetailModal';
@@ -34,7 +34,7 @@ export default function AdminCalendar({ bookings, isLoading = false }: AdminCale
       setIsSummaryLoading(true);
       try {
         const monthFilter = format(currentMonth, 'yyyy-MM');
-        const data = await fetchWithAuth<BookingSummary[]>(`/api/bookings/summary?month=${monthFilter}`);
+        const data = await fetchWithAuth<BookingSummary[]>(`${API}/api/bookings/summary?month=${monthFilter}`);
         setSummaries(data);
       } catch (err) {
         console.error('Gagal memuat summary kalender', err);

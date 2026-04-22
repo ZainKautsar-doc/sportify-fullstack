@@ -1,15 +1,33 @@
 import { clearAuthStorage, getStoredToken } from './storage';
 
+/**
+ * Base URL for API requests.
+ * Taken from VITE_API_URL environment variable (Vercel/Railway compatible).
+ */
+export const API = import.meta.env.VITE_API_URL || '';
+
+// Debug log for production connectivity check
+if (import.meta.env.DEV) {
+  console.log('[API] Base URL:', API || 'UNDEFINED (Check .env)');
+} else {
+  console.log('API BASE URL:', API);
+}
+
 export async function fetchWithAuth<T>(url: string | URL, options: RequestInit = {}) {
   const token = getStoredToken();
-  console.log('[fetchWithAuth] sending token:', token);
   
+  // Construct full URL if it's a relative /api path
+  let finalUrl = url;
+  if (typeof url === 'string' && url.startsWith('/api')) {
+    finalUrl = `${API}${url}`;
+  }
+
   const headers = new Headers(options.headers);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(url, {
+  const response = await fetch(finalUrl, {
     ...options,
     headers,
   });
@@ -33,6 +51,6 @@ export async function fetchWithAuth<T>(url: string | URL, options: RequestInit =
   return data as T;
 }
 
-// Keep apiRequest as an alias for compatibility during migration if needed,
-// but let's shift to fetchWithAuth as requested.
+// Keep apiRequest as an alias for compatibility
 export const apiRequest = fetchWithAuth;
+

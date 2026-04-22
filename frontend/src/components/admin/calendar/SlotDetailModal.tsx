@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { Clock3, LoaderCircle } from 'lucide-react';
 import type { Booking, Field } from '@/src/types/domain';
-import { fetchWithAuth } from '@/src/lib/api';
+import { fetchWithAuth, API } from '@/src/lib/api';
 import Badge from '@/src/components/ui/Badge';
 import Modal from '@/src/components/ui/Modal';
 
@@ -26,7 +26,7 @@ export default function SlotDetailModal({ open, date, onClose }: SlotDetailModal
     if (!open) return;
     const fetchFields = async () => {
       try {
-        const data = await fetchWithAuth<Field[]>('/api/fields');
+        const data = await fetchWithAuth<Field[]>(`${API}/api/fields`);
         setFields(data);
         if (data.length > 0) {
           setSelectedFieldId(data[0].id);
@@ -46,7 +46,7 @@ export default function SlotDetailModal({ open, date, onClose }: SlotDetailModal
     const fetchBookings = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchWithAuth<Booking[]>(`/api/bookings?date=${dateKey}`);
+        const data = await fetchWithAuth<Booking[]>(`${API}/api/bookings?date=${dateKey}`);
         // Consider only active bookings (not rejected)
         setBookings(data.filter(b => b.status !== 'rejected'));
       } catch (err) {

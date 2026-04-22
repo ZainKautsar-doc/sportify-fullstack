@@ -21,7 +21,7 @@ function GoogleIcon() {
   );
 }
 import { toast } from 'sonner';
-import { fetchWithAuth } from '@/src/lib/api';
+import { fetchWithAuth, API } from '@/src/lib/api';
 import type { User } from '@/src/types/domain';
 
 export default function RegisterPage() {
@@ -55,7 +55,7 @@ export default function RegisterPage() {
 
     try {
       // Daftarkan ke backend (real API, bukan localStorage)
-      await fetchWithAuth<User>('/api/auth/register', {
+      await fetchWithAuth<User>(`${API}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -172,7 +172,7 @@ export default function RegisterPage() {
           {/* Google Login Button */}
           <button
             type="button"
-            onClick={() => { window.location.href = 'http://localhost:5000/api/auth/google'; }}
+            onClick={() => { window.location.href = `${API}/api/auth/google`; }}
             className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-md active:scale-[0.98]"
           >
             <GoogleIcon />

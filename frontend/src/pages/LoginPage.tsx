@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { API } from '@/src/lib/api';
 import { Card } from '@/src/components/ui/Card';
 import Button from '@/src/components/ui/Button';
 
@@ -57,7 +58,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${API}/api/auth/google`;
   };
 
   return (

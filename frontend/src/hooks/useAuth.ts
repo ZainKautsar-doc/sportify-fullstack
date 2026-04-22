@@ -9,7 +9,7 @@ import {
   setStoredUser,
   setStoredToken
 } from '@/src/lib/storage';
-import { fetchWithAuth } from '@/src/lib/api';
+import { fetchWithAuth, API } from '@/src/lib/api';
 import { toast } from 'sonner';
 
 export function useAuth() {
@@ -31,11 +31,12 @@ export function useAuth() {
     }
 
     // Panggil API backend
-    const response = await fetchWithAuth<{ token: string; user: User }>('/api/auth/login', {
+    const response = await fetchWithAuth<{ token: string; user: User }>(`${API}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
+
 
     const { token: nextToken, user: nextUser } = response;
     const nextRole = nextUser.role;

@@ -22,13 +22,13 @@ router.get(
   '/google/callback',
   passport.authenticate('google', {
     session: false,
-    failureRedirect: 'http://localhost:5173/login?error=oauth_failed',
+    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`,
   }),
   (req, res) => {
     const user = req.user as { id: number; email: string; role: string } | undefined;
 
     if (!user) {
-      return res.redirect('http://localhost:5173/login?error=oauth_failed');
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`);
     }
 
     const token = generateToken({
@@ -38,7 +38,7 @@ router.get(
     });
 
     // Redirect to frontend with JWT
-    return res.redirect(`http://localhost:5173/oauth-success?token=${token}`);
+    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/oauth-success?token=${token}`);
   }
 );
 

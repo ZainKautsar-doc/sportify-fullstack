@@ -18,14 +18,31 @@ import availabilityRoutes from './routes/availability.routes';
 
 const app = express();
 
+// CORS configuration with dynamic origin support
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://sportifybooking.vercel.app"
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://sportifybooking.vercel.app"
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
-})
-);
+}));
+
+// Request logger for production transparency
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'N/A'}`);
+  next();
+});
 
 app.use(express.json());
 
@@ -56,5 +73,20 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/availability', availabilityRoutes);
+
+/**
+ * Global Error Handler
+ * Ensures all errors are returned as JSON even in production.
+ */
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[Global Error]:', err.message || err);
+  
+  const status = err.status || 500;
+  const message = err.message || 'Ups, terjadi kesalahan pada server';
+  
+  res.status(status).json({
+    error: message,
+  });
+});
 
 export default app;

@@ -15,7 +15,7 @@ console.log('API BASE URL:', API || 'http://localhost:5000 (Fallback)');
 
 export async function fetchWithAuth<T>(url: string | URL, options: RequestInit = {}) {
   const token = getStoredToken();
-  
+
   // Construct full URL if it's a relative /api path
   let finalUrl = url;
   if (typeof url === 'string' && url.startsWith('/api')) {

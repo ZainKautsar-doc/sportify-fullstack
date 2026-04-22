@@ -9,6 +9,7 @@ import bookingRoutes from './routes/bookings.routes';
 import paymentRoutes from './routes/payments.routes';
 import adminRoutes from './routes/admin.routes';
 import availabilityRoutes from './routes/availability.routes';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -36,6 +37,14 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://sportifybooking.vercel.app"
+  ],
+  credentials: true
+}));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/fields', fieldRoutes);

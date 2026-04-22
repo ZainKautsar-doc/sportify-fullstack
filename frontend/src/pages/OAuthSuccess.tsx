@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function OAuthSuccess() {
   const navigate = useNavigate();
@@ -10,9 +11,15 @@ export default function OAuthSuccess() {
 
     if (token) {
       localStorage.setItem("token", token);
-      setTimeout(() => {
-        navigate("/");
-      }, 100);
+
+      // 🔥 decode token
+      const decoded: any = jwtDecode(token);
+
+      // simpan user
+      localStorage.setItem("user", JSON.stringify(decoded));
+
+      // redirect
+      window.location.href = "/"; // ⬅️ pakai ini biar full reload
     } else {
       navigate("/login?error=oauth_failed");
     }

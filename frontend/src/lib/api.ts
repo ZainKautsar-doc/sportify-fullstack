@@ -2,16 +2,16 @@ import { clearAuthStorage, getStoredToken } from './storage';
 
 /**
  * Base URL for API requests.
- * Taken from VITE_API_URL environment variable (Vercel/Railway compatible).
+ * MUST be set via VITE_API_URL environment variable in production.
  */
 export const API = import.meta.env.VITE_API_URL || '';
 
-// Debug log for production connectivity check
-if (import.meta.env.DEV) {
-  console.log('[API] Base URL:', API || 'UNDEFINED (Check .env)');
-} else {
-  console.log('API BASE URL:', API);
+if (!API && !import.meta.env.DEV) {
+  console.warn('⚠️ [SPORTIFY] VITE_API_URL is NOT defined. API calls will likely fail (404). Check your environment settings.');
 }
+
+console.log('API BASE URL:', API || 'http://localhost:5000 (Fallback)');
+
 
 export async function fetchWithAuth<T>(url: string | URL, options: RequestInit = {}) {
   const token = getStoredToken();
